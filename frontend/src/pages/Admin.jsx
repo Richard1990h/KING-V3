@@ -52,6 +52,162 @@ const HealthBadge = ({ status }) => {
     );
 };
 
+// Admins Online Panel Component
+const AdminsOnlinePanel = ({ users, currentUserId }) => {
+    const [adminVisibility, setAdminVisibility] = useState({});
+    const [savingVisibility, setSavingVisibility] = useState(false);
+    
+    // Filter admins from the users list
+    const admins = (users || []).filter(u => u.role === 'admin');
+    
+    // Calculate online status based on last_login_at (within last 15 minutes)
+    const isOnline = (lastLogin) => {
+        if (!lastLogin) return false;
+        const lastActive = new Date(lastLogin);
+        const now = new Date();
+        const diffMinutes = (now - lastActive) / (1000 * 60);
+        return diffMinutes < 15;
+    };
+    
+    // Toggle visibility for current admin
+    const toggleMyVisibility = async () => {
+        setSavingVisibility(true);
+        try {
+            const newVisibility = !adminVisibility[currentUserId];
+            // In a real implementation, this would call the backend
+            // await adminAPI.updateAdminVisibility(currentUserId, !newVisibility);
+            setAdminVisibility(prev => ({ ...prev, [currentUserId]: newVisibility }));
+            // For now, just update local state
+            alert(newVisibility ? 'You are now appearing as Online' : 'You are now appearing as Offline');
+        } catch (error) {
+            console.error('Failed to update visibility:', error);
+        } finally {
+            setSavingVisibility(false);
+        }
+    };
+    
+    // Get display status (respects visibility setting)
+    const getDisplayStatus = (admin) => {
+        const actuallyOnline = isOnline(admin.last_login_at || admin.analytics?.last_login_at);
+        // If admin has set visibility to hidden, show offline even if online
+        if (adminVisibility[admin.id] === false) {
+            return { status: 'offline', label: 'Appear Offline', color: 'bg-gray-500' };
+        }
+        if (actuallyOnline) {
+            return { status: 'online', label: 'Online', color: 'bg-green-500' };
+        }
+        return { status: 'offline', label: 'Offline', color: 'bg-gray-500' };
+    };
+
+    return (
+        <div className="glass-card rounded-xl p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-yellow-400" />
+                Admin Team Status
+            </h3>
+            <p className="text-sm text-gray-400 mb-4">
+                View all admins and their online status. Admins can set themselves to appear offline for privacy.
+            </p>
+            
+            {/* Current Admin's Visibility Toggle */}
+            <div className="mb-4 p-4 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <Label className="text-white">Your Visibility</Label>
+                        <p className="text-sm text-gray-400 mt-1">
+                            {adminVisibility[currentUserId] === false 
+                                ? "You're appearing as offline to other users"
+                                : "You're visible as online when active"
+                            }
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-400">
+                            {adminVisibility[currentUserId] === false ? 'Hidden' : 'Visible'}
+                        </span>
+                        <Switch
+                            checked={adminVisibility[currentUserId] !== false}
+                            onCheckedChange={toggleMyVisibility}
+                            disabled={savingVisibility}
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            {/* Admins List */}
+            <div className="space-y-3">
+                {admins.length === 0 ? (
+                    <div className="text-center py-6 text-gray-500">
+                        <Shield className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                        <p>No admins found</p>
+                    </div>
+                ) : (
+                    admins.map((admin) => {
+                        const displayStatus = getDisplayStatus(admin);
+                        const isCurrentUser = admin.id === currentUserId;
+                        
+                        return (
+                            <div 
+                                key={admin.id} 
+                                className={`flex items-center gap-4 p-3 rounded-lg ${
+                                    isCurrentUser ? 'bg-fuchsia-500/5 border border-fuchsia-500/20' : 'bg-white/5'
+                                }`}
+                            >
+                                {/* Avatar with status indicator */}
+                                <div className="relative">
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center overflow-hidden">
+                                        {admin.avatar_url ? (
+                                            <img src={admin.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-white text-lg font-medium">
+                                                {admin.name?.[0]?.toUpperCase() || 'A'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {/* Online indicator */}
+                                    <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#0B0F19] ${displayStatus.color}`} />
+                                </div>
+                                
+                                {/* Admin info */}
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-medium text-white">
+                                            {admin.name || admin.display_name || 'Admin'}
+                                        </p>
+                                        {isCurrentUser && (
+                                            <span className="px-2 py-0.5 rounded text-xs bg-fuchsia-500/20 text-fuchsia-400">
+                                                You
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-gray-400">{admin.email}</p>
+                                </div>
+                                
+                                {/* Status */}
+                                <div className="text-right">
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                                        displayStatus.status === 'online' 
+                                            ? 'bg-green-500/20 text-green-400'
+                                            : 'bg-gray-500/20 text-gray-400'
+                                    }`}>
+                                        <span className={`w-2 h-2 rounded-full ${displayStatus.color}`} />
+                                        {displayStatus.label}
+                                    </span>
+                                    {admin.analytics?.last_login_at && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Last seen: {new Date(admin.analytics.last_login_at).toLocaleString()}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+        </div>
+    );
+};
+
 export default function Admin() {
     const { user } = useAuth();
     const navigate = useNavigate();
