@@ -198,7 +198,7 @@ function TOSModal({ isOpen, onAccept, onDecline }) {
                                     </Button>
                                 </div>
                                 <p className="text-xs text-gray-500 text-center mt-3">
-                                    By clicking "Accept & Continue", you agree to our Terms of Service and Privacy Policy
+                                    By clicking &quot;Accept &amp; Continue&quot;, you agree to our Terms of Service and Privacy Policy
                                 </p>
                             </div>
                         </>
