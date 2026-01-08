@@ -293,7 +293,7 @@ export default function Login() {
                     <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
                 </div>
                 
-                <div className="relative z-10 w-full max-w-2xl">
+                <div className="relative z-10 w-full max-w-4xl">
                     <div className="flex items-center justify-center gap-3 mb-6">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-cyan-500 flex items-center justify-center">
                             <Zap className="w-6 h-6 text-white" />
@@ -301,7 +301,7 @@ export default function Login() {
                         <span className="text-2xl font-bold text-white font-outfit">LittleHelper AI</span>
                     </div>
                     
-                    <MiniShooterGame onRetryConnection={handleRetryConnection} />
+                    <WaveDefenseGame onRetryConnection={handleRetryConnection} />
                     
                     <div className="mt-4 text-center">
                         <button 
