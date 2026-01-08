@@ -468,10 +468,10 @@ INSERT INTO `user_themes` (`user_id`, `primary_color`, `secondary_color`, `backg
 -- =====================================================
 -- INSERT TEST USER (Optional - for development)
 -- Email: test@example.com
--- Password: test123 (BCrypt hashed)
+-- Password: test123 (SHA256 hashed)
 -- =====================================================
 INSERT INTO `users` (`id`, `email`, `name`, `display_name`, `password_hash`, `role`, `credits`, `credits_enabled`, `plan`, `language`, `tos_accepted`, `tos_accepted_at`, `tos_version`, `created_at`) VALUES
-('test-user-001', 'test@example.com', 'Test User', 'Tester', '$2a$11$K8FHKFt1Y0kzKXCVpPGWoOjPF8Gw8QJQzXHnDrxXxJkCRvYJKMIwK', 'user', 500.0000, 1, 'starter', 'en', 1, NOW(), '1.0', NOW());
+('test-user-001', 'test@example.com', 'Test User', 'Tester', 'BQOs0QUShl0qPnMUFFKCJyTElcf3lpGAbGW9rF4cVJs=', 'user', 500.0000, 1, 'starter', 'en', 1, NOW(), '1.0', NOW());
 
 -- Insert test user theme
 INSERT INTO `user_themes` (`user_id`, `primary_color`, `secondary_color`, `background_color`, `card_color`, `text_color`, `hover_color`, `credits_color`) VALUES
