@@ -478,19 +478,13 @@ INSERT INTO `user_themes` (`user_id`, `primary_color`, `secondary_color`, `backg
 ('test-user-001', '#d946ef', '#06b6d4', '#030712', '#0B0F19', '#ffffff', '#a855f7', '#d946ef');
 
 -- =====================================================
--- VERIFICATION QUERIES
+-- SETUP COMPLETE!
 -- =====================================================
-SELECT 'Database Setup Complete!' AS Status;
-SELECT COUNT(*) AS 'Total Tables Created' FROM information_schema.tables WHERE table_schema = 'littlehelper_ai';
-SELECT 'Users' AS 'Table', COUNT(*) AS 'Rows' FROM users
-UNION ALL SELECT 'Subscription Plans', COUNT(*) FROM subscription_plans
-UNION ALL SELECT 'Credit Packages', COUNT(*) FROM credit_packages
-UNION ALL SELECT 'AI Providers', COUNT(*) FROM free_ai_providers
-UNION ALL SELECT 'System Settings', COUNT(*) FROM system_settings;
-
--- =====================================================
--- LOGIN CREDENTIALS
--- =====================================================
--- Admin: admin@littlehelper.ai / admin123
--- Test:  test@example.com / test123
+-- 
+-- LOGIN CREDENTIALS:
+--   Admin: admin@littlehelper.ai / admin123
+--   Test:  test@example.com / test123
+--
+-- Tables created: 21
+-- Data inserted: Users, Plans, Credits, AI Providers, Settings
 -- =====================================================
