@@ -330,6 +330,67 @@ export default function Admin() {
         }
     };
 
+    // Credit Package management functions
+    const openPackageDialog = (pkg = null) => {
+        if (pkg) {
+            setEditingPackage(pkg);
+            setPackageForm({
+                name: pkg.name || '',
+                credits: pkg.credits || 0,
+                price: pkg.price || 0,
+                is_active: pkg.is_active !== false
+            });
+            setCreatingPackage(false);
+        } else {
+            setEditingPackage(null);
+            setPackageForm({
+                name: '',
+                credits: 0,
+                price: 0,
+                is_active: true
+            });
+            setCreatingPackage(true);
+        }
+    };
+
+    const savePackage = async () => {
+        setSaving(true);
+        try {
+            const packageData = {
+                name: packageForm.name,
+                credits: parseInt(packageForm.credits) || 0,
+                price: parseFloat(packageForm.price) || 0,
+                is_active: packageForm.is_active
+            };
+
+            if (creatingPackage) {
+                await adminAPI.createCreditPackage(packageData);
+            } else {
+                await adminAPI.updateCreditPackage(editingPackage.id, packageData);
+            }
+            loadAllData();
+            setEditingPackage(null);
+            setCreatingPackage(false);
+            setPackageForm({ name: '', credits: 0, price: 0, is_active: true });
+        } catch (error) {
+            console.error('Failed to save package:', error);
+            alert(error.response?.data?.detail || 'Failed to save package');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const deletePackage = async (packageId) => {
+        if (!window.confirm('Are you sure you want to delete this credit package?')) return;
+        try {
+            await adminAPI.deleteCreditPackage(packageId);
+            loadAllData();
+        } catch (error) {
+            console.error('Failed to delete package:', error);
+            alert(error.response?.data?.detail || 'Failed to delete package');
+        }
+    };
+
     // Free AI Provider functions
     const toggleProvider = async (providerId, enabled) => {
         try {
