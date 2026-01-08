@@ -32,6 +32,7 @@ public interface IProjectService
     // Chat
     Task<List<ChatMessage>> GetChatHistoryAsync(string projectId, string userId, int limit);
     Task<ChatMessage> SaveChatMessageAsync(ChatMessage message);
+    Task<int> ClearChatHistoryAsync(string projectId, string userId);
     
     // Project Runs
     Task<ProjectRun> CreateRunAsync(string projectId, string runType);
