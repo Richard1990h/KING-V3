@@ -521,3 +521,35 @@ INSERT INTO `site_settings` (`id`, `announcement_enabled`, `announcement_message
 VALUES ('default', 0, NULL, 'info', 0, 1, NOW())
 ON DUPLICATE KEY UPDATE `id` = `id`;
 
+
+-- =====================================================
+-- PERFORMANCE INDEXES
+-- =====================================================
+
+-- Friend requests indexes
+CREATE INDEX IF NOT EXISTS idx_friend_requests_sender ON friend_requests(sender_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_receiver ON friend_requests(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_status ON friend_requests(status);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_created ON friend_requests(created_at);
+
+-- Friends indexes
+CREATE INDEX IF NOT EXISTS idx_friends_user ON friends(user_id);
+CREATE INDEX IF NOT EXISTS idx_friends_friend ON friends(friend_user_id);
+
+-- Direct messages indexes
+CREATE INDEX IF NOT EXISTS idx_dm_sender ON direct_messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_dm_receiver ON direct_messages(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_dm_created ON direct_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_dm_is_read ON direct_messages(is_read);
+CREATE INDEX IF NOT EXISTS idx_dm_conversation ON direct_messages(sender_id, receiver_id, created_at);
+
+-- Chat history indexes
+CREATE INDEX IF NOT EXISTS idx_chat_project ON chat_history(project_id);
+CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_conversation ON chat_history(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_chat_timestamp ON chat_history(timestamp);
+
+-- Project collaborators indexes
+CREATE INDEX IF NOT EXISTS idx_collab_project ON project_collaborators(project_id);
+CREATE INDEX IF NOT EXISTS idx_collab_user ON project_collaborators(user_id);
+
