@@ -137,6 +137,7 @@ export default function Workspace() {
         loadProject();
         loadAgents();
         loadGlobalConversations();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectId]);
 
     // Auto-scroll chat
