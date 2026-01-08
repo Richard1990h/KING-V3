@@ -236,12 +236,22 @@ If asked to create files or code, explain what you're creating.";
     }
 
     [HttpDelete("{projectId}/chat")]
-    public Task<ActionResult> ClearChatHistory(string projectId)
+    public async Task<ActionResult> ClearChatHistory(string projectId)
     {
-        // Mark messages as deleted
         var userId = GetUserId();
-        // For now just return success - in production would update database
-        return Task.FromResult<ActionResult>(Ok(new { message = "Chat history cleared" }));
+        
+        // Verify project ownership
+        var project = await _projectService.GetProjectAsync(projectId, userId);
+        if (project == null)
+            return NotFound(new { detail = "Project not found" });
+
+        // Delete chat messages for this project
+        var deleted = await _projectService.ClearChatHistoryAsync(projectId, userId);
+        
+        _logger.LogInformation("Cleared {Count} chat messages for project {ProjectId} by user {UserId}", 
+            deleted, projectId, userId);
+            
+        return Ok(new { message = "Chat history cleared", messages_deleted = deleted });
     }
 }
 
