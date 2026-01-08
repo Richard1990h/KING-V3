@@ -1,9 +1,10 @@
-// Job Orchestration Service Implementation - Updated to match interface
+// Job Orchestration Service Implementation - Fixed yield issues
 using LittleHelperAI.Data;
 using LittleHelperAI.Data.Models;
 using LittleHelperAI.API.Controllers;
 using LittleHelperAI.Agents;
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 
 namespace LittleHelperAI.API.Services;
 
@@ -210,51 +211,26 @@ public class JobOrchestrationService : IJobOrchestrationService
                 "UPDATE jobs SET current_task_index = @Index, updated_at = @Now WHERE id = @JobId",
                 new { Index = i, Now = DateTime.UtcNow, JobId = jobId });
 
-            try
+            // Execute task and get result (moved outside try-catch for yield)
+            var taskResult = await ExecuteTaskSafeAsync(task, user);
+            tasks[i] = taskResult.UpdatedTask;
+
+            if (taskResult.Success)
             {
-                // Get the appropriate agent
-                var agent = _agentRegistry.GetAgent(task.AgentType);
-                
-                // Execute the agent
-                var result = await agent.ExecuteAsync(task.Description);
-
-                // Update task with results
-                tasks[i] = task with {
-                    Status = result.Success ? "completed" : "failed",
-                    ActualTokens = result.TokensUsed,
-                    ActualCredits = result.TokensUsed * 0.001, // Simple credit calculation
-                    Output = result.Content,
-                    FilesCreated = result.FilesCreated.Select(f => f.Path).ToList(),
-                    Error = result.Errors.FirstOrDefault()
-                };
-
                 yield return new { 
                     type = "task_complete",
                     task_index = i,
-                    success = result.Success,
-                    output_preview = result.Content.Length > 200 ? result.Content[..200] + "..." : result.Content,
-                    files_created = result.FilesCreated.Select(f => f.Path).ToList()
+                    success = true,
+                    output_preview = taskResult.OutputPreview,
+                    files_created = taskResult.FilesCreated
                 };
-
-                // Deduct credits
-                if (user.CreditsEnabled)
-                {
-                    await _creditService.DeductCreditsAsync(user.Id, (decimal)tasks[i].ActualCredits, $"Job task: {task.Title}");
-                }
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError(ex, "Task execution failed for task {TaskId}", task.Id);
-                
-                tasks[i] = task with {
-                    Status = "failed",
-                    Error = ex.Message
-                };
-
                 yield return new { 
                     type = "task_error",
                     task_index = i,
-                    error = ex.Message
+                    error = taskResult.Error
                 };
             }
         }
@@ -285,6 +261,58 @@ public class JobOrchestrationService : IJobOrchestrationService
             total_credits_used = totalActualCredits
         };
     }
+
+    // Helper method to execute task safely without yield in try-catch
+    private async Task<TaskExecutionResult> ExecuteTaskSafeAsync(TaskItem task, UserResponse user)
+    {
+        try
+        {
+            var agent = _agentRegistry.GetAgent(task.AgentType);
+            var result = await agent.ExecuteAsync(task.Description);
+
+            var updatedTask = task with {
+                Status = result.Success ? "completed" : "failed",
+                ActualTokens = result.TokensUsed,
+                ActualCredits = result.TokensUsed * 0.001,
+                Output = result.Content,
+                FilesCreated = result.FilesCreated.Select(f => f.Path).ToList(),
+                Error = result.Errors.FirstOrDefault()
+            };
+
+            // Deduct credits
+            if (user.CreditsEnabled && updatedTask.ActualCredits > 0)
+            {
+                await _creditService.DeductCreditsAsync(user.Id, (decimal)updatedTask.ActualCredits, $"Job task: {task.Title}");
+            }
+
+            return new TaskExecutionResult(
+                true,
+                updatedTask,
+                result.Content.Length > 200 ? result.Content[..200] + "..." : result.Content,
+                result.FilesCreated.Select(f => f.Path).ToList(),
+                null
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Task execution failed for task {TaskId}", task.Id);
+            
+            var failedTask = task with {
+                Status = "failed",
+                Error = ex.Message
+            };
+
+            return new TaskExecutionResult(false, failedTask, null, new List<string>(), ex.Message);
+        }
+    }
+
+    private record TaskExecutionResult(
+        bool Success, 
+        TaskItem UpdatedTask, 
+        string? OutputPreview, 
+        List<string> FilesCreated, 
+        string? Error
+    );
 
     private static List<TaskItem> GenerateMultiAgentTasks(string prompt)
     {
