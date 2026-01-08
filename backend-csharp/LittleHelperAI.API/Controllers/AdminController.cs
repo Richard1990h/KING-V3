@@ -33,6 +33,7 @@ public class AdminController : ControllerBase
         _creditService = creditService;
         _jobService = jobService;
         _aiService = aiService;
+        _db = db;
         _config = config;
         _logger = logger;
     }
