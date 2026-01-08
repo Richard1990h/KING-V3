@@ -165,9 +165,111 @@ public class SystemController : ControllerBase
             return BadRequest(new { detail = ex.Message });
         }
     }
+
+    // AI Plan endpoint - generates a build plan for a project
+    [HttpPost("ai/plan")]
+    [Authorize]
+    public async Task<ActionResult> CreateBuildPlan([FromBody] BuildPlanRequest request)
+    {
+        try
+        {
+            var systemPrompt = @"You are a software architect AI. Given a user's request and existing project files, create a detailed build plan.
+Return a JSON object with this exact structure:
+{
+    ""summary"": ""Brief summary of what will be built"",
+    ""tasks"": [
+        {
+            ""id"": ""task-1"",
+            ""title"": ""Task title"",
+            ""description"": ""What this task does"",
+            ""agent"": ""developer"",
+            ""estimatedCredits"": 5.0,
+            ""dependencies"": []
+        }
+    ],
+    ""totalEstimatedCredits"": 10.0
+}
+Be concise and practical. Focus on the actual implementation steps.";
+
+            var userPrompt = $"User Request: {request.Prompt}\n\nExisting Files: {string.Join(", ", request.ExistingFiles ?? Array.Empty<string>())}\n\nProject Language: {request.Language ?? "Python"}";
+            
+            var response = await _aiService.GenerateAsync(userPrompt, systemPrompt, 2000);
+            
+            // Try to parse as JSON, otherwise wrap in a simple structure
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Deserialize<object>(response.Content ?? "{}");
+                return Ok(json);
+            }
+            catch
+            {
+                // If not valid JSON, return a simple plan
+                return Ok(new
+                {
+                    summary = response.Content?.Substring(0, Math.Min(200, response.Content?.Length ?? 0)) ?? "Build plan generated",
+                    tasks = new[]
+                    {
+                        new
+                        {
+                            id = "task-1",
+                            title = "Implement requested feature",
+                            description = request.Prompt,
+                            agent = "developer",
+                            estimatedCredits = 5.0,
+                            dependencies = Array.Empty<string>()
+                        }
+                    },
+                    totalEstimatedCredits = 5.0
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { detail = $"Failed to create build plan: {ex.Message}" });
+        }
+    }
+
+    // AI Execute Task endpoint - executes a single task from the plan
+    [HttpPost("ai/execute-task")]
+    [Authorize]
+    public async Task<ActionResult> ExecuteTask([FromBody] ExecuteTaskRequest request)
+    {
+        try
+        {
+            var systemPrompt = $@"You are a {request.Agent ?? "developer"} AI agent. 
+Execute the following task and provide the code or content needed.
+Be practical and provide working code. Use proper formatting.";
+
+            var userPrompt = $"Task: {request.TaskTitle}\nDescription: {request.TaskDescription}\n\nContext:\n{request.Context ?? "No additional context"}";
+            
+            var response = await _aiService.GenerateAsync(userPrompt, systemPrompt, 4000);
+            
+            return Ok(new
+            {
+                taskId = request.TaskId,
+                status = "completed",
+                output = response.Content,
+                agent = request.Agent,
+                tokensUsed = response.Tokens,
+                creditsUsed = (response.Tokens / 1000.0) * 0.5
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new
+            {
+                taskId = request.TaskId,
+                status = "failed",
+                error = ex.Message,
+                agent = request.Agent
+            });
+        }
+    }
 }
 
 // Request models
 public record EstimateCostRequest(string? Prompt, string? Model);
 public record LLMGenerateRequest(string Prompt, string? SystemPrompt, int MaxTokens = 2000);
 public record AssistantChatRequest(string Message, string? ConversationId);
+public record BuildPlanRequest(string Prompt, string? ProjectId, string? Language, string[]? ExistingFiles);
+public record ExecuteTaskRequest(string TaskId, string TaskTitle, string TaskDescription, string? Agent, string? Context);
