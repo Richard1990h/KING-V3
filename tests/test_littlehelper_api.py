@@ -180,7 +180,7 @@ class TestAdminPlans:
     def test_get_subscription_plans(self, admin_token):
         """Test getting subscription plans"""
         response = requests.get(
-            f"{BASE_URL}/api/admin/plans",
+            f"{BASE_URL}/api/admin/subscription-plans",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
