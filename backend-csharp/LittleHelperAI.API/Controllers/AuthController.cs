@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using LittleHelperAI.API.Services;
-using LittleHelperAI.API.Models;
 using LittleHelperAI.Data.Models;
 
 namespace LittleHelperAI.API.Controllers;
