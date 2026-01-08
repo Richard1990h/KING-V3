@@ -202,11 +202,26 @@ export default function GlobalAssistant() {
         }
     };
 
-    const handleButtonClick = () => {
+    const handleButtonClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only toggle if we're not dragging
         if (!isDragging) {
-            setIsOpen(!isOpen);
+            console.log("GlobalAssistant: toggling isOpen from", isOpen, "to", !isOpen);
+            setIsOpen(prev => !prev);
         }
     };
+
+    // Reset dragging state on mouse up (as a safety)
+    useEffect(() => {
+        const handleGlobalMouseUp = () => {
+            if (isDragging) {
+                setIsDragging(false);
+            }
+        };
+        document.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
+    }, [isDragging]);
 
     if (!user) return null;
 
