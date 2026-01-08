@@ -313,7 +313,31 @@ public class AdminController : ControllerBase
     public async Task<ActionResult> GetAgentActivity([FromQuery] int limit = 100)
     {
         var activity = await _aiService.GetAgentActivityAsync(limit);
-        return Ok(activity);
+        
+        // Map to frontend-expected format
+        var response = activity.Select(a => new
+        {
+            id = a.Id,
+            user_id = a.UserId,
+            project_id = a.ProjectId,
+            job_id = a.JobId,
+            agentId = a.AgentId,
+            agent_id = a.AgentId, // Alias
+            action = a.Action,
+            tokensUsed = a.TokensUsed,
+            tokens_used = a.TokensUsed, // Alias
+            tokens_input = a.TokensUsed / 2,
+            tokens_output = a.TokensUsed / 2,
+            creditsUsed = a.CreditsUsed,
+            credits_used = a.CreditsUsed, // Alias
+            success = a.Success,
+            status = a.Success ? "completed" : (a.Error != null ? "failed" : "pending"),
+            error = a.Error,
+            timestamp = a.Timestamp.ToString("o"),
+            created_at = a.Timestamp.ToString("o") // Alias
+        });
+        
+        return Ok(response);
     }
 }
 
