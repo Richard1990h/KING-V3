@@ -55,6 +55,9 @@ public class AuthService : IAuthService
 
         await RecordIpAsync(userId, clientIp, "register", null);
 
+        // Auto-friend admins if enabled in site settings
+        await AutoFriendAdminsForNewUser(userId);
+
         var user = await _db.QueryFirstOrDefaultAsync<User>(
             "SELECT * FROM users WHERE id = @Id", 
             new { Id = userId });
@@ -63,6 +66,44 @@ public class AuthService : IAuthService
             GenerateToken(user!),
             MapToUserResponse(user!)
         );
+    }
+
+    private async Task AutoFriendAdminsForNewUser(string newUserId)
+    {
+        try
+        {
+            // Check if admins_auto_friend is enabled
+            var settings = await _db.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT admins_auto_friend FROM site_settings WHERE id = 'default'");
+            
+            if (settings == null || settings.admins_auto_friend != true)
+                return;
+
+            // Get all admin IDs
+            var adminIds = await _db.QueryAsync<string>(
+                "SELECT id FROM users WHERE role = 'admin'");
+
+            foreach (var adminId in adminIds)
+            {
+                // Create bidirectional friendship
+                var friendshipId1 = Guid.NewGuid().ToString();
+                var friendshipId2 = Guid.NewGuid().ToString();
+                var now = DateTime.UtcNow;
+
+                await _db.ExecuteAsync(
+                    @"INSERT IGNORE INTO friends (id, user_id, friend_user_id, created_at)
+                      VALUES (@Id1, @AdminId, @UserId, @Now),
+                             (@Id2, @UserId, @AdminId, @Now)",
+                    new { Id1 = friendshipId1, Id2 = friendshipId2, AdminId = adminId, UserId = newUserId, Now = now });
+
+                _logger.LogInformation("Auto-friended admin {AdminId} with new user {UserId}", adminId, newUserId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to auto-friend admins for new user {UserId}", newUserId);
+            // Don't throw - this shouldn't block registration
+        }
     }
 
     public async Task<TokenResponse> LoginAsync(LoginRequest request, string clientIp, string? userAgent = null)
