@@ -1036,12 +1036,21 @@ export default function Workspace() {
                                                             size={16} 
                                                             style={{ color: isActive ? '#fff' : (isEnabled ? agent.color : '#666') }} 
                                                         />
-                                                        {/* Active indicator glow animation */}
+                                                        {/* Active agent pulsing glow animation */}
                                                         {isActive && (
-                                                            <div 
-                                                                className="absolute inset-0 rounded-lg animate-ping opacity-30"
-                                                                style={{ backgroundColor: primaryColor }}
-                                                            />
+                                                            <>
+                                                                <div 
+                                                                    className="absolute inset-0 rounded-lg animate-ping opacity-30"
+                                                                    style={{ backgroundColor: primaryColor }}
+                                                                />
+                                                                <div 
+                                                                    className="absolute inset-[-4px] rounded-xl animate-pulse opacity-50"
+                                                                    style={{ 
+                                                                        backgroundColor: primaryColor,
+                                                                        filter: 'blur(8px)'
+                                                                    }}
+                                                                />
+                                                            </>
                                                         )}
                                                         {/* Hover tooltip */}
                                                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
