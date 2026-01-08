@@ -85,6 +85,7 @@ public class SiteSettingsController : ControllerBase
             if (request.AdminsAutoFriend == true)
             {
                 using var conn = _db.CreateConnection();
+                conn.Open();
                 await AutoFriendAllAdmins(conn);
             }
 
@@ -167,6 +168,7 @@ public class SiteSettingsController : ControllerBase
         try
         {
             using var conn = _db.CreateConnection();
+            conn.Open();
             await AutoFriendAllAdmins(conn);
             return Ok(new { message = "All admins have been added as friends to all users" });
         }
