@@ -228,12 +228,12 @@ public class AIService : IAIService, AgentIAIService
 
     private async Task<AgentAIResponse> CallEmergentLLMAsync(string prompt, string? systemPrompt, string apiKey, int maxTokens)
     {
-        _logger.LogInformation("Calling Emergent/OpenAI LLM with key: {KeyPrefix}...", apiKey.Substring(0, Math.Min(20, apiKey.Length)));
+        _logger.LogInformation("Calling Emergent LLM with key: {KeyPrefix}...", apiKey.Substring(0, Math.Min(20, apiKey.Length)));
         
         var model = _config["EmergentLLM:Model"] ?? "gpt-4o-mini";
         var requestBody = new
         {
-            model = $"openai/{model}", // Emergent uses provider/model format
+            model = model, // Emergent uses model name directly (e.g., gpt-4o-mini)
             messages = BuildMessages(prompt, systemPrompt),
             max_tokens = maxTokens,
             temperature = 0.7
