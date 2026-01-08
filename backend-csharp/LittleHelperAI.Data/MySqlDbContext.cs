@@ -149,10 +149,90 @@ public class MySqlDbContext : IDbContext
         // Create all tables
         await CreateTablesAsync(connection);
         
+        // Run migrations to add missing columns to existing tables
+        await RunMigrationsAsync(connection);
+        
         // Insert default data
         await InsertDefaultDataAsync(connection);
 
         Console.WriteLine($"Database '{database}' initialized successfully.");
+    }
+
+    private async Task RunMigrationsAsync(MySqlConnection connection)
+    {
+        // Add missing columns to users table if they don't exist
+        var userColumns = new Dictionary<string, string>
+        {
+            ["tos_accepted"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS tos_accepted BOOLEAN DEFAULT FALSE",
+            ["tos_accepted_at"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS tos_accepted_at DATETIME",
+            ["tos_version"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS tos_version VARCHAR(20)",
+            ["display_name"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(255)",
+            ["avatar_url"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT",
+            ["registration_ip"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS registration_ip VARCHAR(45)",
+            ["last_login_ip"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(45)",
+            ["credits_enabled"] = "ALTER TABLE users ADD COLUMN IF NOT EXISTS credits_enabled BOOLEAN DEFAULT TRUE"
+        };
+
+        foreach (var migration in userColumns)
+        {
+            try
+            {
+                // Check if column exists first
+                var exists = await connection.QueryFirstOrDefaultAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = @Column",
+                    new { Column = migration.Key });
+                
+                if (exists == 0)
+                {
+                    // MariaDB/MySQL 10.0.2+ supports ADD COLUMN IF NOT EXISTS, but for compatibility:
+                    var alterSql = $"ALTER TABLE users ADD COLUMN {migration.Key} " + migration.Key switch
+                    {
+                        "tos_accepted" => "BOOLEAN DEFAULT FALSE",
+                        "tos_accepted_at" => "DATETIME NULL",
+                        "tos_version" => "VARCHAR(20) NULL",
+                        "display_name" => "VARCHAR(255) NULL",
+                        "avatar_url" => "TEXT NULL",
+                        "registration_ip" => "VARCHAR(45) NULL",
+                        "last_login_ip" => "VARCHAR(45) NULL",
+                        "credits_enabled" => "BOOLEAN DEFAULT TRUE",
+                        _ => "VARCHAR(255) NULL"
+                    };
+                    await connection.ExecuteAsync(alterSql);
+                    Console.WriteLine($"Added column '{migration.Key}' to users table");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Migration warning for {migration.Key}: {ex.Message}");
+            }
+        }
+
+        // Add missing columns to chat_history table
+        try
+        {
+            var chatColumns = new[] { "is_valid", "invalidated_at" };
+            foreach (var col in chatColumns)
+            {
+                var exists = await connection.QueryFirstOrDefaultAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'chat_history' AND COLUMN_NAME = @Column",
+                    new { Column = col });
+                
+                if (exists == 0)
+                {
+                    var alterSql = col == "is_valid" 
+                        ? "ALTER TABLE chat_history ADD COLUMN is_valid BOOLEAN DEFAULT TRUE"
+                        : "ALTER TABLE chat_history ADD COLUMN invalidated_at DATETIME NULL";
+                    await connection.ExecuteAsync(alterSql);
+                    Console.WriteLine($"Added column '{col}' to chat_history table");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chat history migration warning: {ex.Message}");
+        }
     }
 
     private async Task CreateTablesAsync(MySqlConnection connection)
