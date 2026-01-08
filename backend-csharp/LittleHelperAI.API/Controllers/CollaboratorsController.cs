@@ -106,7 +106,7 @@ public class CollaboratorsController : ControllerBase
                 Message = $"You've been added as a collaborator to project '{project.name}'"
             });
 
-        _logger.LogInformation("User {CollabId} added to project {ProjectId} by {OwnerId}", 
+        _logger.LogInformation("User {0} added to project {1} by {2}", 
             dto.UserId, projectId, userId);
 
         return Ok(new { message = "Collaborator added", collaborator_id = collabId });
