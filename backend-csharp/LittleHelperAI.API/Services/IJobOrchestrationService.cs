@@ -1,17 +1,18 @@
-// Job Orchestration Service Interface
+// Job Orchestration Service Interface - Updated to match controller
 using LittleHelperAI.Data.Models;
+using LittleHelperAI.API.Controllers;
 
 namespace LittleHelperAI.API.Services;
 
 public interface IJobOrchestrationService
 {
-    Task<Job> CreateJobAsync(string projectId, string userId, string prompt, bool multiAgentMode);
-    Task<Job?> GetJobAsync(string jobId);
-    Task<List<Job>> GetProjectJobsAsync(string projectId);
+    Task<JobResponse> CreateJobAsync(UserResponse user, CreateJobRequest request);
+    Task<JobResponse?> GetJobAsync(string jobId, string userId);
+    Task<List<JobResponse>> GetUserJobsAsync(string userId, int limit);
     Task<List<Job>> GetRunningJobsAsync();
-    Task<Job?> ApproveJobAsync(string jobId, string userId, decimal approvedCredits);
-    Task<Job?> CancelJobAsync(string jobId, string userId);
-    Task<Job?> AdvanceJobAsync(string jobId);
-    Task<Job?> CompleteJobAsync(string jobId);
-    Task<Job?> FailJobAsync(string jobId, string error);
+    Task<ApproveJobResult> ApproveJobAsync(string jobId, UserResponse user, ApproveJobRequest request);
+    Task<object> ContinueJobAsync(string jobId, UserResponse user, bool approved);
+    IAsyncEnumerable<object> ExecuteJobAsync(string jobId, UserResponse user);
 }
+
+public record ApproveJobResult(bool Success, string? Error, JobResponse? Job);
