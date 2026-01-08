@@ -517,3 +517,29 @@ public record UpdateCreditPackageRequest(
     bool? IsActive,
     int? SortOrder
 );
+
+public record CreateSubscriptionPlanRequest(
+    string Id,
+    string Name,
+    string? Description,
+    decimal PriceMonthly,
+    decimal PriceYearly,
+    int DailyCredits,
+    int MaxConcurrentWorkspaces,
+    bool AllowsOwnApiKeys,
+    List<string>? Features,
+    int SortOrder = 0
+);
+
+public record UpdateSubscriptionPlanRequest(
+    string? Name,
+    string? Description,
+    decimal? PriceMonthly,
+    decimal? PriceYearly,
+    int? DailyCredits,
+    int? MaxConcurrentWorkspaces,
+    bool? AllowsOwnApiKeys,
+    List<string>? Features,
+    bool? IsActive,
+    int? SortOrder
+);
