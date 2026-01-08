@@ -175,10 +175,13 @@ public class AIService : IAIService, AgentIAIService
     {
         // Try Emergent LLM first
         var emergentKey = _config["EmergentLLM:Key"];
+        _logger.LogInformation("Emergent key configured: {HasKey}", !string.IsNullOrEmpty(emergentKey));
+        
         if (!string.IsNullOrEmpty(emergentKey))
         {
             try
             {
+                _logger.LogInformation("Calling Emergent LLM...");
                 return await CallEmergentLLMAsync(prompt, systemPrompt, emergentKey, maxTokens);
             }
             catch (Exception ex)
