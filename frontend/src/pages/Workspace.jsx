@@ -688,26 +688,26 @@ export default function Workspace() {
 
     return (
         <div className="h-screen bg-[#030712] flex flex-col">
-            {/* Header */}
-            <header className="h-14 border-b border-white/10 bg-[#0B0F19] flex items-center justify-between px-4 flex-shrink-0">
-                <div className="flex items-center gap-4">
-                    <Link to="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors" data-testid="back-to-dashboard">
+            {/* Header - Mobile Responsive */}
+            <header className="h-14 md:h-14 border-b border-white/10 bg-[#0B0F19] flex items-center justify-between px-2 sm:px-4 flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                    <Link to="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors flex-shrink-0" data-testid="back-to-dashboard">
                         <ArrowLeft size={20} />
                     </Link>
                     
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded bg-fuchsia-500/20 flex items-center justify-center">
+                    <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded bg-fuchsia-500/20 flex items-center justify-center flex-shrink-0">
                             <Code size={14} className="text-fuchsia-400" />
                         </div>
-                        <span className="font-semibold">{project?.name}</span>
-                        <span className="text-sm text-gray-500">•</span>
-                        <span className="text-sm text-fuchsia-400">{project?.language}</span>
-                        <span className="text-sm text-gray-500">•</span>
-                        <span className="text-sm text-gray-400">{files.length} FILES</span>
+                        <span className="font-semibold truncate max-w-[100px] sm:max-w-[200px]">{project?.name}</span>
+                        <span className="text-sm text-gray-500 hidden sm:inline">•</span>
+                        <span className="text-sm text-fuchsia-400 hidden sm:inline">{project?.language}</span>
+                        <span className="text-sm text-gray-500 hidden md:inline">•</span>
+                        <span className="text-sm text-gray-400 hidden md:inline">{Array.isArray(files) ? files.length : 0} FILES</span>
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                     <Button
                         variant="outline"
                         size="sm"
