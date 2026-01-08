@@ -264,7 +264,17 @@ export function parseMessageWithCode(content) {
  * MessageContent - Renders message with code blocks styled
  */
 export function MessageContent({ content }) {
+    // Handle null/undefined content
+    if (!content) {
+        return null;
+    }
+    
     const parts = parseMessageWithCode(content);
+    
+    // Safety check - ensure parts is an array
+    if (!parts || !Array.isArray(parts) || parts.length === 0) {
+        return <p className="text-sm whitespace-pre-wrap">{content}</p>;
+    }
 
     return (
         <div className="space-y-3">
