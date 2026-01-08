@@ -1003,29 +1003,170 @@ export default function Admin() {
 
                     {/* System Health Tab */}
                     <TabsContent value="health">
-                        <div className="grid gap-4">
-                            {systemHealth && Object.entries(systemHealth).map(([component, data]) => (
-                                <div key={component} className="glass-card rounded-xl p-5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
+                        <div className="space-y-6">
+                            {/* Quick Status Overview */}
+                            {systemHealth && (
+                                <>
+                                    {/* System Info */}
+                                    <div className="glass-card rounded-xl p-6">
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                             <Server className="w-5 h-5 text-fuchsia-400" />
-                                            <span className="font-semibold capitalize">{component.replace('_', ' ')}</span>
+                                            System Information
+                                        </h3>
+                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">Operating System</p>
+                                                <p className="font-medium">{systemHealth.system?.os || 'N/A'}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">Machine Name</p>
+                                                <p className="font-medium">{systemHealth.system?.machineName || 'N/A'}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">CPU Cores</p>
+                                                <p className="font-medium">{systemHealth.system?.processors || 'N/A'} cores</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">.NET Version</p>
+                                                <p className="font-medium">{systemHealth.system?.dotnetVersion || 'N/A'}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">Architecture</p>
+                                                <p className="font-medium">{systemHealth.system?.is64Bit ? '64-bit' : '32-bit'}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">User</p>
+                                                <p className="font-medium">{systemHealth.system?.userName || 'N/A'}</p>
+                                            </div>
                                         </div>
-                                        {typeof data === 'object' && data.status && (
-                                            <HealthBadge status={data.status} />
+                                    </div>
+
+                                    {/* Memory Info */}
+                                    <div className="glass-card rounded-xl p-6">
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                            <Activity className="w-5 h-5 text-cyan-400" />
+                                            Memory Usage
+                                        </h3>
+                                        <div className="grid md:grid-cols-3 gap-4">
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">Process Memory</p>
+                                                <p className="font-medium text-lg">{systemHealth.memory?.processMemory || 'N/A'}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">GC Memory</p>
+                                                <p className="font-medium text-lg">{systemHealth.memory?.gcMemory || 'N/A'}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-lg p-4">
+                                                <p className="text-sm text-gray-400">GC Collections</p>
+                                                <p className="font-medium text-sm">
+                                                    Gen0: {systemHealth.memory?.gcCollections?.gen0 || 0} | 
+                                                    Gen1: {systemHealth.memory?.gcCollections?.gen1 || 0} | 
+                                                    Gen2: {systemHealth.memory?.gcCollections?.gen2 || 0}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Storage/Drives */}
+                                    <div className="glass-card rounded-xl p-6">
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                            <HardDrive className="w-5 h-5 text-green-400" />
+                                            Storage Drives
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {systemHealth.storage?.drives?.map((drive, idx) => (
+                                                <div key={idx} className="bg-white/5 rounded-lg p-4">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="font-medium">{drive.name} ({drive.type})</span>
+                                                        <span className="text-sm text-gray-400">{drive.format}</span>
+                                                    </div>
+                                                    <div className="w-full bg-white/10 rounded-full h-2 mb-2">
+                                                        <div 
+                                                            className="bg-gradient-to-r from-fuchsia-500 to-cyan-500 h-2 rounded-full"
+                                                            style={{ width: drive.percentUsed }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex justify-between text-xs text-gray-400">
+                                                        <span>Used: {drive.usedSpace}</span>
+                                                        <span>Free: {drive.freeSpace}</span>
+                                                        <span>Total: {drive.totalSize}</span>
+                                                    </div>
+                                                </div>
+                                            )) || <p className="text-gray-400">No drive information available</p>}
+                                        </div>
+                                    </div>
+
+                                    {/* Service Status */}
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        {/* Database Status */}
+                                        <div className="glass-card rounded-xl p-6">
+                                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                                <Database className="w-5 h-5 text-yellow-400" />
+                                                Database
+                                            </h3>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-3 h-3 rounded-full ${
+                                                    systemHealth.database?.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'
+                                                }`} />
+                                                <span>{systemHealth.database?.connection || 'Unknown'}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-400 mt-2">{systemHealth.database?.type || 'MySQL'}</p>
+                                        </div>
+
+                                        {/* API Status */}
+                                        <div className="glass-card rounded-xl p-6">
+                                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                                <Wifi className="w-5 h-5 text-blue-400" />
+                                                API Server
+                                            </h3>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-3 h-3 rounded-full ${
+                                                    systemHealth.api?.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'
+                                                }`} />
+                                                <span>Running on port {systemHealth.api?.port || 8001}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-400 mt-2">Uptime: {systemHealth.api?.uptime || 'N/A'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* AI Services Status */}
+                                    <div className="glass-card rounded-xl p-6">
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                            <Bot className="w-5 h-5 text-purple-400" />
+                                            AI Services
+                                        </h3>
+                                        {systemHealth.ai_services && (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between bg-white/5 rounded-lg p-3">
+                                                    <span>Emergent LLM</span>
+                                                    <span className={systemHealth.ai_services.emergent_llm?.enabled ? 'text-green-400' : 'text-gray-400'}>
+                                                        {systemHealth.ai_services.emergent_llm?.enabled ? 'Enabled' : 'Disabled'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between bg-white/5 rounded-lg p-3">
+                                                    <span>Free Providers Active</span>
+                                                    <span className="text-cyan-400">
+                                                        {systemHealth.ai_services.free_providers?.length || 0}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between bg-white/5 rounded-lg p-3">
+                                                    <span>Local LLM (Ollama)</span>
+                                                    <span className="text-gray-400">
+                                                        {systemHealth.ai_services.local_llm?.url || 'Not configured'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
-                                    {typeof data === 'object' && data.message && (
-                                        <p className="text-sm text-gray-400 mt-2">{data.message}</p>
-                                    )}
-                                    {typeof data === 'object' && (data.running !== undefined || data.queued !== undefined) && (
-                                        <div className="flex gap-4 mt-2 text-sm">
-                                            <span className="text-green-400">Running: {data.running}</span>
-                                            <span className="text-yellow-400">Queued: {data.queued}</span>
-                                        </div>
-                                    )}
+                                </>
+                            )}
+                            
+                            {!systemHealth && (
+                                <div className="glass-card rounded-xl p-8 text-center">
+                                    <RefreshCw className="w-8 h-8 text-gray-500 mx-auto mb-3 animate-spin" />
+                                    <p className="text-gray-400">Loading system health data...</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </TabsContent>
 
