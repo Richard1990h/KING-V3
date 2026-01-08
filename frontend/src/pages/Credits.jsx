@@ -507,6 +507,14 @@ export default function Credits() {
                 >
                     <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
                     <div className="max-w-2xl mx-auto space-y-4 text-left">
+                        <div className="glass-card rounded-xl p-4 border-red-500/30 bg-red-500/5">
+                            <h3 className="font-semibold mb-2 text-red-400">⚠️ Refund Policy - Please Read First</h3>
+                            <p className="text-sm text-gray-400">
+                                <strong className="text-red-300">Credits and subscriptions are non-refundable and non-transferable. All sales are final.</strong>{' '}
+                                Credits are a consumable digital product and once purchased, they are immediately available for use. 
+                                We encourage you to start with a smaller package or the free plan to ensure our platform meets your needs.
+                            </p>
+                        </div>
                         <div className="glass-card rounded-xl p-4">
                             <h3 className="font-semibold mb-2">What's the difference between plans and add-ons?</h3>
                             <p className="text-sm text-gray-400">Monthly plans give you daily credits that refresh each day, plus features like more workspaces and API key support. Add-on credits are one-time purchases that top up your balance and never expire.</p>
@@ -526,14 +534,6 @@ export default function Credits() {
                         <div className="glass-card rounded-xl p-4">
                             <h3 className="font-semibold mb-2">Can I change my plan anytime?</h3>
                             <p className="text-sm text-gray-400">Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll get immediate access to higher limits. When downgrading, changes take effect at your next billing cycle.</p>
-                        </div>
-                        <div className="glass-card rounded-xl p-4 border-red-500/30 bg-red-500/5">
-                            <h3 className="font-semibold mb-2 text-red-400">Refund Policy</h3>
-                            <p className="text-sm text-gray-400">
-                                <strong className="text-red-300">Credits and subscriptions are non-refundable and non-transferable. All sales are final.</strong>{' '}
-                                Credits are a consumable digital product and once purchased, they are immediately available for use. 
-                                We encourage you to start with a smaller package or the free plan to ensure our platform meets your needs.
-                            </p>
                         </div>
                     </div>
                 </motion.div>
