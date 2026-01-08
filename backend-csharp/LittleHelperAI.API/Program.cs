@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using StackExchange.Redis;
 
-// Alias to avoid ambiguity
+// Alias to avoid ambiguity between API and Agents IAIService
 using ApiIAIService = LittleHelperAI.API.Services.IAIService;
 using AgentIAIService = LittleHelperAI.Agents.IAIService;
 
@@ -37,7 +37,7 @@ builder.Services.AddCors(options =>
 });
 
 // Configure JWT Authentication
-var jwtSecret = builder.Configuration["JWT:Secret"] ?? "littlehelper-ai-secret-key-2024";
+var jwtSecret = builder.Configuration["JWT:Secret"] ?? "littlehelper-ai-secret-key-2024-minimum-32-chars";
 var key = Encoding.ASCII.GetBytes(jwtSecret);
 
 builder.Services.AddAuthentication(x =>
@@ -64,16 +64,32 @@ var connectionString = builder.Configuration.GetConnectionString("MySQL")
     ?? "Server=localhost;Database=littlehelper_ai;User=root;Password=;";
 builder.Services.AddSingleton<IDbContext>(new MySqlDbContext(connectionString));
 
-// Register Redis (optional)
+// Register Redis (optional - gracefully handle if not available)
 var redisConnection = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrEmpty(redisConnection))
 {
-    builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
-    builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+    try
+    {
+        var redisOptions = ConfigurationOptions.Parse(redisConnection);
+        redisOptions.AbortOnConnectFail = false; // Don't throw on connection failure
+        redisOptions.ConnectRetry = 3;
+        redisOptions.ConnectTimeout = 5000;
+        
+        var redis = ConnectionMultiplexer.Connect(redisOptions);
+        builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+        builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+        Console.WriteLine("Redis cache service registered successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Redis connection failed, using in-memory cache: {ex.Message}");
+        builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
+    }
 }
 else
 {
     builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
+    Console.WriteLine("Using in-memory cache service");
 }
 
 // Register AIService as concrete type first, then both interfaces
