@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using LittleHelperAI.Data;
 using LittleHelperAI.Data.Models;
+using LittleHelperAI.API.Services;
 using Dapper;
 
 namespace LittleHelperAI.API.Controllers;
@@ -11,13 +12,21 @@ namespace LittleHelperAI.API.Controllers;
 [Route("api/site-settings")]
 public class SiteSettingsController : ControllerBase
 {
+    private readonly ISiteSettingsService _siteSettingsService;
     private readonly IDbContext _db;
     private readonly ILogger<SiteSettingsController> _logger;
+    private readonly NotificationService _notificationService;
 
-    public SiteSettingsController(IDbContext db, ILogger<SiteSettingsController> logger)
+    public SiteSettingsController(
+        ISiteSettingsService siteSettingsService,
+        IDbContext db, 
+        ILogger<SiteSettingsController> logger,
+        NotificationService notificationService)
     {
+        _siteSettingsService = siteSettingsService;
         _db = db;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -29,35 +38,7 @@ public class SiteSettingsController : ControllerBase
     {
         try
         {
-            using var conn = _db.CreateConnection();
-            
-            var settings = await conn.QueryFirstOrDefaultAsync<SiteSettings>(
-                @"SELECT id, announcement_enabled, announcement_message, announcement_type, 
-                         maintenance_mode, admins_auto_friend, updated_at, updated_by
-                  FROM site_settings WHERE id = 'default'");
-
-            if (settings == null)
-            {
-                // Create default settings if not exists
-                settings = new SiteSettings
-                {
-                    Id = "default",
-                    AnnouncementEnabled = false,
-                    AnnouncementMessage = null,
-                    AnnouncementType = "info",
-                    MaintenanceMode = false,
-                    AdminsAutoFriend = true,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                await conn.ExecuteAsync(
-                    @"INSERT INTO site_settings (id, announcement_enabled, announcement_message, 
-                        announcement_type, maintenance_mode, admins_auto_friend, updated_at)
-                      VALUES (@Id, @AnnouncementEnabled, @AnnouncementMessage, 
-                        @AnnouncementType, @MaintenanceMode, @AdminsAutoFriend, @UpdatedAt)",
-                    settings);
-            }
-
+            var settings = await _siteSettingsService.GetSettingsAsync();
             return Ok(settings);
         }
         catch (Exception ex)
@@ -76,21 +57,8 @@ public class SiteSettingsController : ControllerBase
     {
         try
         {
-            using var conn = _db.CreateConnection();
-            
-            var settings = await conn.QueryFirstOrDefaultAsync<SiteSettings>(
-                @"SELECT announcement_enabled, announcement_message, announcement_type, maintenance_mode
-                  FROM site_settings WHERE id = 'default'");
-
-            var publicSettings = new PublicSiteSettings
-            {
-                AnnouncementEnabled = settings?.AnnouncementEnabled ?? false,
-                AnnouncementMessage = settings?.AnnouncementMessage,
-                AnnouncementType = settings?.AnnouncementType ?? "info",
-                MaintenanceMode = settings?.MaintenanceMode ?? false
-            };
-
-            return Ok(publicSettings);
+            var settings = await _siteSettingsService.GetPublicSettingsAsync();
+            return Ok(settings);
         }
         catch (Exception ex)
         {
@@ -110,83 +78,24 @@ public class SiteSettingsController : ControllerBase
         try
         {
             var userId = User.FindFirst("user_id")?.Value;
-            using var conn = _db.CreateConnection();
-
-            // Check if settings exist
-            var exists = await conn.ExecuteScalarAsync<bool>(
-                "SELECT COUNT(1) > 0 FROM site_settings WHERE id = 'default'");
-
-            if (!exists)
-            {
-                // Create new settings
-                await conn.ExecuteAsync(
-                    @"INSERT INTO site_settings (id, announcement_enabled, announcement_message, 
-                        announcement_type, maintenance_mode, admins_auto_friend, updated_at, updated_by)
-                      VALUES ('default', @AnnouncementEnabled, @AnnouncementMessage, 
-                        @AnnouncementType, @MaintenanceMode, @AdminsAutoFriend, @UpdatedAt, @UpdatedBy)",
-                    new
-                    {
-                        AnnouncementEnabled = request.AnnouncementEnabled ?? false,
-                        AnnouncementMessage = request.AnnouncementMessage,
-                        AnnouncementType = request.AnnouncementType ?? "info",
-                        MaintenanceMode = request.MaintenanceMode ?? false,
-                        AdminsAutoFriend = request.AdminsAutoFriend ?? true,
-                        UpdatedAt = DateTime.UtcNow,
-                        UpdatedBy = userId
-                    });
-            }
-            else
-            {
-                // Update existing settings
-                var updates = new List<string>();
-                var parameters = new DynamicParameters();
-                parameters.Add("UpdatedAt", DateTime.UtcNow);
-                parameters.Add("UpdatedBy", userId);
-
-                if (request.AnnouncementEnabled.HasValue)
-                {
-                    updates.Add("announcement_enabled = @AnnouncementEnabled");
-                    parameters.Add("AnnouncementEnabled", request.AnnouncementEnabled.Value);
-                }
-                if (request.AnnouncementMessage != null)
-                {
-                    updates.Add("announcement_message = @AnnouncementMessage");
-                    parameters.Add("AnnouncementMessage", request.AnnouncementMessage);
-                }
-                if (request.AnnouncementType != null)
-                {
-                    updates.Add("announcement_type = @AnnouncementType");
-                    parameters.Add("AnnouncementType", request.AnnouncementType);
-                }
-                if (request.MaintenanceMode.HasValue)
-                {
-                    updates.Add("maintenance_mode = @MaintenanceMode");
-                    parameters.Add("MaintenanceMode", request.MaintenanceMode.Value);
-                }
-                if (request.AdminsAutoFriend.HasValue)
-                {
-                    updates.Add("admins_auto_friend = @AdminsAutoFriend");
-                    parameters.Add("AdminsAutoFriend", request.AdminsAutoFriend.Value);
-                }
-
-                updates.Add("updated_at = @UpdatedAt");
-                updates.Add("updated_by = @UpdatedBy");
-
-                var sql = $"UPDATE site_settings SET {string.Join(", ", updates)} WHERE id = 'default'";
-                await conn.ExecuteAsync(sql, parameters);
-            }
+            
+            var settings = await _siteSettingsService.UpdateSettingsAsync(request, userId!);
 
             // If admins_auto_friend was enabled, trigger the auto-friend process
             if (request.AdminsAutoFriend == true)
             {
+                using var conn = _db.CreateConnection();
                 await AutoFriendAllAdmins(conn);
             }
 
-            // Return updated settings
-            var settings = await conn.QueryFirstOrDefaultAsync<SiteSettings>(
-                @"SELECT id, announcement_enabled, announcement_message, announcement_type, 
-                         maintenance_mode, admins_auto_friend, updated_at, updated_by
-                  FROM site_settings WHERE id = 'default'");
+            // If announcement changed, broadcast to all connected users
+            if (request.AnnouncementEnabled == true && !string.IsNullOrEmpty(request.AnnouncementMessage))
+            {
+                await _notificationService.BroadcastAnnouncement(
+                    request.AnnouncementMessage,
+                    request.AnnouncementType ?? "info"
+                );
+            }
 
             _logger.LogInformation("Site settings updated by user {UserId}", userId);
             return Ok(settings);
@@ -266,5 +175,16 @@ public class SiteSettingsController : ControllerBase
             _logger.LogError(ex, "Failed to trigger auto-friend admins");
             return StatusCode(500, new { detail = "Failed to auto-friend admins" });
         }
+    }
+
+    /// <summary>
+    /// Invalidate site settings cache (admin only)
+    /// </summary>
+    [HttpPost("invalidate-cache")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult> InvalidateCache()
+    {
+        await _siteSettingsService.InvalidateCacheAsync();
+        return Ok(new { message = "Site settings cache invalidated" });
     }
 }
