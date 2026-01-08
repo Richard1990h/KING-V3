@@ -186,6 +186,76 @@ export default function Profile() {
         }
     };
 
+    const loadGoogleDriveConfig = async () => {
+        try {
+            const res = await profileAPI.getGoogleDriveConfig();
+            if (res.data) {
+                setGoogleDrive({
+                    isConnected: res.data.is_connected || false,
+                    email: res.data.email || '',
+                    accessToken: res.data.access_token || '',
+                    refreshToken: res.data.refresh_token || ''
+                });
+            }
+        } catch (error) {
+            console.log('Google Drive not configured');
+        }
+    };
+
+    const connectGoogleDrive = () => {
+        // In a real implementation, this would open Google OAuth
+        // For now, we'll simulate with a simple flow
+        const clientId = prompt('Enter your Google OAuth Client ID:');
+        if (!clientId) return;
+        
+        const email = prompt('Enter your Google account email:');
+        if (!email) return;
+
+        // Simulate OAuth token (in production, this would be from Google OAuth flow)
+        setGoogleDrive({
+            isConnected: true,
+            email: email,
+            accessToken: 'simulated_access_token_' + Date.now(),
+            refreshToken: 'simulated_refresh_token_' + Date.now()
+        });
+        
+        saveGoogleDriveConfig({
+            is_connected: true,
+            email: email,
+            access_token: 'simulated_access_token_' + Date.now(),
+            refresh_token: 'simulated_refresh_token_' + Date.now()
+        });
+    };
+
+    const saveGoogleDriveConfig = async (config) => {
+        setSavingGoogleDrive(true);
+        try {
+            await profileAPI.saveGoogleDriveConfig(config);
+        } catch (error) {
+            console.error('Failed to save Google Drive config:', error);
+        } finally {
+            setSavingGoogleDrive(false);
+        }
+    };
+
+    const disconnectGoogleDrive = async () => {
+        if (!window.confirm('Are you sure you want to disconnect Google Drive?')) return;
+        
+        setGoogleDrive({
+            isConnected: false,
+            email: '',
+            accessToken: '',
+            refreshToken: ''
+        });
+        
+        await saveGoogleDriveConfig({
+            is_connected: false,
+            email: '',
+            access_token: '',
+            refresh_token: ''
+        });
+    };
+
     const handleAvatarUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
