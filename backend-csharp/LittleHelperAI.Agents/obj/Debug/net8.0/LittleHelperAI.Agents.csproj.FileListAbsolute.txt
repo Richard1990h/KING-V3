@@ -1,0 +1,12 @@
+/app/backend-csharp/LittleHelperAI.Agents/bin/Debug/net8.0/LittleHelperAI.Agents.deps.json
+/app/backend-csharp/LittleHelperAI.Agents/bin/Debug/net8.0/LittleHelperAI.Agents.dll
+/app/backend-csharp/LittleHelperAI.Agents/bin/Debug/net8.0/LittleHelperAI.Agents.pdb
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/LittleHelperAI.Agents.csproj.AssemblyReference.cache
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/LittleHelperAI.Agents.GeneratedMSBuildEditorConfig.editorconfig
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/LittleHelperAI.Agents.AssemblyInfoInputs.cache
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/LittleHelperAI.Agents.AssemblyInfo.cs
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/LittleHelperAI.Agents.csproj.CoreCompileInputs.cache
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/LittleHelperAI.Agents.dll
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/refint/LittleHelperAI.Agents.dll
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/LittleHelperAI.Agents.pdb
+/app/backend-csharp/LittleHelperAI.Agents/obj/Debug/net8.0/ref/LittleHelperAI.Agents.dll

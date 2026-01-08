@@ -1,0 +1,12 @@
+/app/backend-csharp/LittleHelperAI.Data/bin/Debug/net8.0/LittleHelperAI.Data.deps.json
+/app/backend-csharp/LittleHelperAI.Data/bin/Debug/net8.0/LittleHelperAI.Data.dll
+/app/backend-csharp/LittleHelperAI.Data/bin/Debug/net8.0/LittleHelperAI.Data.pdb
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/LittleHelperAI.Data.csproj.AssemblyReference.cache
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/LittleHelperAI.Data.GeneratedMSBuildEditorConfig.editorconfig
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/LittleHelperAI.Data.AssemblyInfoInputs.cache
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/LittleHelperAI.Data.AssemblyInfo.cs
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/LittleHelperAI.Data.csproj.CoreCompileInputs.cache
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/LittleHelperAI.Data.dll
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/refint/LittleHelperAI.Data.dll
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/LittleHelperAI.Data.pdb
+/app/backend-csharp/LittleHelperAI.Data/obj/Debug/net8.0/ref/LittleHelperAI.Data.dll
