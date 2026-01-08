@@ -749,6 +749,28 @@ export default function Workspace() {
                         <span className="ml-2">{t('common_export', 'Export')}</span>
                     </Button>
                     
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10" 
+                        data-testid="save-to-drive-btn"
+                        onClick={async () => {
+                            try {
+                                await api.post(`/collaboration/${projectId}/export/drive`);
+                                alert('Project saved to Google Drive!');
+                            } catch (error) {
+                                if (error.response?.status === 400) {
+                                    alert('Please connect Google Drive in your Profile settings first.');
+                                } else {
+                                    alert('Failed to save to Google Drive: ' + (error.response?.data?.detail || error.message));
+                                }
+                            }
+                        }}
+                    >
+                        <Cloud size={16} />
+                        <span className="ml-2">Save to Drive</span>
+                    </Button>
+                    
                     <div className="ml-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30">
                         <Zap size={16} className="text-fuchsia-400" />
                         <span className="text-fuchsia-300 font-medium">{formatCredits(user?.credits || 0)}</span>
