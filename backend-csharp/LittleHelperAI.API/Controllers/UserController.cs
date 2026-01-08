@@ -217,3 +217,7 @@ public record UserGoogleDriveConfigRequest(
     string? AccessToken,
     string? RefreshToken
 );
+
+public record VisibilityRequest(
+    bool AppearOffline
+);
