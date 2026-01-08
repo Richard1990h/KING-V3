@@ -287,11 +287,10 @@ export default function GlobalAssistant() {
                         <GripVertical size={12} className="text-gray-400" />
                     </div>
                     
-                    <motion.button
+                    <button
+                        type="button"
                         onClick={handleButtonClick}
-                        className={`w-14 h-14 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-500 shadow-lg shadow-fuchsia-500/30 flex items-center justify-center hover:scale-110 transition-transform ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}
-                        whileHover={{ scale: isDragging ? 1 : 1.1 }}
-                        whileTap={{ scale: isDragging ? 1 : 0.95 }}
+                        className={`w-14 h-14 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-500 shadow-lg shadow-fuchsia-500/30 flex items-center justify-center hover:scale-110 transition-all duration-200 ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}
                         data-testid="global-assistant-btn"
                     >
                         {isOpen ? (
@@ -299,22 +298,21 @@ export default function GlobalAssistant() {
                         ) : (
                             <MessageSquare className="w-6 h-6 text-white" />
                         )}
-                    </motion.button>
+                    </button>
                 </div>
             </div>
 
             {/* Chat panel */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed w-96 h-[500px] bg-[#0B0F19] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden z-[9998]"
-                        style={panelStyle}
-                        data-testid="global-assistant-panel"
-                    >
+            {isOpen && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="fixed w-96 h-[500px] bg-[#0B0F19] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden z-[9998]"
+                    style={panelStyle}
+                    data-testid="global-assistant-panel"
+                >
                         {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#0B0F19]">
                             <div className="flex items-center gap-3">
