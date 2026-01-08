@@ -295,7 +295,10 @@ export default function GlobalAssistant() {
                     
                     <button
                         type="button"
-                        onClick={handleButtonClick}
+                        onClick={(e) => {
+                            console.log("Button clicked directly!");
+                            handleButtonClick(e);
+                        }}
                         className={`w-14 h-14 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-500 shadow-lg shadow-fuchsia-500/30 flex items-center justify-center hover:scale-110 transition-all duration-200 ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}
                         data-testid="global-assistant-btn"
                     >
