@@ -205,11 +205,9 @@ export default function GlobalAssistant() {
     const handleButtonClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // Only toggle if we're not dragging
-        if (!isDragging) {
-            console.log("GlobalAssistant: toggling isOpen from", isOpen, "to", !isOpen);
-            setIsOpen(prev => !prev);
-        }
+        // Simple toggle without drag check for now
+        console.log("GlobalAssistant: toggling isOpen from", isOpen, "to", !isOpen);
+        setIsOpen(prev => !prev);
     };
 
     // Reset dragging state on mouse up (as a safety)
