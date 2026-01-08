@@ -161,9 +161,16 @@ public class MySqlDbContext : IDbContext
 
     public async Task<int> ExecuteAsync(string sql, object? param = null)
     {
-        using var connection = CreateConnection();
+        using var connection = new MySqlConnection(_connectionString);
         await connection.OpenAsync();
         return await connection.ExecuteAsync(sql, param);
+    }
+
+    public async Task<T?> ExecuteScalarAsync<T>(string sql, object? param = null)
+    {
+        using var connection = new MySqlConnection(_connectionString);
+        await connection.OpenAsync();
+        return await connection.ExecuteScalarAsync<T>(sql, param);
     }
 
     public async Task InitializeAsync()
