@@ -6,7 +6,12 @@ using System.Net.Http.Headers;
 
 namespace LittleHelperAI.API.Services;
 
-public class AIService : IAIService, Agents.IAIService
+// Alias for the Agents namespace interface to avoid ambiguity
+using AgentIAIService = LittleHelperAI.Agents.IAIService;
+using AgentAIResponse = LittleHelperAI.Agents.AIResponse;
+using AgentHealthStatus = LittleHelperAI.Agents.HealthStatus;
+
+public class AIService : IAIService, AgentIAIService
 {
     private readonly IDbContext _db;
     private readonly IConfiguration _config;
@@ -20,6 +25,8 @@ public class AIService : IAIService, Agents.IAIService
         _logger = logger;
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
     }
+
+    // ==================== IAIService (API Layer) ====================
 
     public async Task<object> CheckHealthAsync()
     {
@@ -45,23 +52,6 @@ public class AIService : IAIService, Agents.IAIService
             },
             timestamp = DateTime.UtcNow
         };
-    }
-
-    // Implementation of Agents.IAIService.CheckHealthAsync
-    async Task<Agents.HealthStatus> Agents.IAIService.CheckHealthAsync()
-    {
-        var providers = await GetFreeAIProvidersAsync();
-        var availableModels = providers
-            .Where(p => p.IsEnabled && !string.IsNullOrEmpty(p.Model))
-            .Select(p => $"{p.Provider}:{p.Model}")
-            .ToList();
-
-        return new Agents.HealthStatus(
-            "connected",
-            "available",
-            "configured",
-            availableModels
-        );
     }
 
     public async Task<List<FreeAIProvider>> GetFreeAIProvidersAsync()
@@ -163,8 +153,25 @@ public class AIService : IAIService, Agents.IAIService
         return activity.ToList();
     }
 
-    // Implementation of Agents.IAIService.GenerateAsync
-    public async Task<Agents.AIResponse> GenerateAsync(string prompt, string? systemPrompt = null, int maxTokens = 4000)
+    // ==================== AgentIAIService (Agent Layer) ====================
+
+    async Task<AgentHealthStatus> AgentIAIService.CheckHealthAsync()
+    {
+        var providers = await GetFreeAIProvidersAsync();
+        var availableModels = providers
+            .Where(p => p.IsEnabled && !string.IsNullOrEmpty(p.Model))
+            .Select(p => $"{p.Provider}:{p.Model}")
+            .ToList();
+
+        return new AgentHealthStatus(
+            "connected",
+            "available",
+            "configured",
+            availableModels
+        );
+    }
+
+    public async Task<AgentAIResponse> GenerateAsync(string prompt, string? systemPrompt = null, int maxTokens = 4000)
     {
         // Try Emergent LLM first
         var emergentKey = _config["EmergentLLM:Key"];
@@ -172,8 +179,7 @@ public class AIService : IAIService, Agents.IAIService
         {
             try
             {
-                var response = await CallEmergentLLMAsync(prompt, systemPrompt, emergentKey, maxTokens);
-                return response;
+                return await CallEmergentLLMAsync(prompt, systemPrompt, emergentKey, maxTokens);
             }
             catch (Exception ex)
             {
@@ -215,9 +221,10 @@ public class AIService : IAIService, Agents.IAIService
         yield return response.Content;
     }
 
-    private async Task<Agents.AIResponse> CallEmergentLLMAsync(string prompt, string? systemPrompt, string apiKey, int maxTokens)
+    // ==================== Private Helper Methods ====================
+
+    private async Task<AgentAIResponse> CallEmergentLLMAsync(string prompt, string? systemPrompt, string apiKey, int maxTokens)
     {
-        // Emergent LLM uses OpenAI-compatible API
         var requestBody = new
         {
             model = "gpt-4o-mini",
@@ -241,10 +248,10 @@ public class AIService : IAIService, Agents.IAIService
         var content = result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
         var tokens = result.GetProperty("usage").GetProperty("total_tokens").GetInt32();
         
-        return new Agents.AIResponse(content, "emergent", "gpt-4o-mini", tokens);
+        return new AgentAIResponse(content, "emergent", "gpt-4o-mini", tokens);
     }
 
-    private async Task<Agents.AIResponse> CallFreeProviderAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    private async Task<AgentAIResponse> CallFreeProviderAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
     {
         return provider.Provider.ToLower() switch
         {
@@ -257,7 +264,7 @@ public class AIService : IAIService, Agents.IAIService
         };
     }
 
-    private async Task<Agents.AIResponse> CallGroqAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    private async Task<AgentAIResponse> CallGroqAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
     {
         if (string.IsNullOrEmpty(provider.ApiKey))
             throw new InvalidOperationException("Groq API key not configured");
@@ -287,10 +294,10 @@ public class AIService : IAIService, Agents.IAIService
             ? usage.GetProperty("total_tokens").GetInt32() 
             : maxTokens / 2;
         
-        return new Agents.AIResponse(content, "groq", provider.Model ?? "llama-3.1-70b-versatile", tokens);
+        return new AgentAIResponse(content, "groq", provider.Model ?? "llama-3.1-70b-versatile", tokens);
     }
 
-    private async Task<Agents.AIResponse> CallTogetherAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    private async Task<AgentAIResponse> CallTogetherAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
     {
         if (string.IsNullOrEmpty(provider.ApiKey))
             throw new InvalidOperationException("Together AI API key not configured");
@@ -320,10 +327,10 @@ public class AIService : IAIService, Agents.IAIService
             ? usage.GetProperty("total_tokens").GetInt32() 
             : maxTokens / 2;
         
-        return new Agents.AIResponse(content, "together", provider.Model ?? "llama-3.2", tokens);
+        return new AgentAIResponse(content, "together", provider.Model ?? "llama-3.2", tokens);
     }
 
-    private async Task<Agents.AIResponse> CallOpenRouterAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    private async Task<AgentAIResponse> CallOpenRouterAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
     {
         if (string.IsNullOrEmpty(provider.ApiKey))
             throw new InvalidOperationException("OpenRouter API key not configured");
@@ -355,10 +362,10 @@ public class AIService : IAIService, Agents.IAIService
             ? usage.GetProperty("total_tokens").GetInt32() 
             : maxTokens / 2;
         
-        return new Agents.AIResponse(content, "openrouter", provider.Model ?? "gemma-2-9b-it", tokens);
+        return new AgentAIResponse(content, "openrouter", provider.Model ?? "gemma-2-9b-it", tokens);
     }
 
-    private async Task<Agents.AIResponse> CallHuggingFaceAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    private async Task<AgentAIResponse> CallHuggingFaceAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
     {
         if (string.IsNullOrEmpty(provider.ApiKey))
             throw new InvalidOperationException("HuggingFace API key not configured");
@@ -396,10 +403,10 @@ public class AIService : IAIService, Agents.IAIService
             content = result.GetProperty("generated_text").GetString() ?? "";
         }
         
-        return new Agents.AIResponse(content, "huggingface", model, maxTokens / 2);
+        return new AgentAIResponse(content, "huggingface", model, maxTokens / 2);
     }
 
-    private async Task<Agents.AIResponse> CallOllamaAsync(string prompt, string? systemPrompt, int maxTokens)
+    private async Task<AgentAIResponse> CallOllamaAsync(string prompt, string? systemPrompt, int maxTokens)
     {
         var ollamaUrl = _config["LocalLLM:Url"] ?? "http://localhost:11434";
         var model = _config["LocalLLM:Model"] ?? "qwen2.5-coder:1.5b";
@@ -426,7 +433,7 @@ public class AIService : IAIService, Agents.IAIService
         var content = result.GetProperty("message").GetProperty("content").GetString() ?? "";
         var tokens = result.TryGetProperty("eval_count", out var count) ? count.GetInt32() : maxTokens / 2;
         
-        return new Agents.AIResponse(content, "ollama", model, tokens);
+        return new AgentAIResponse(content, "ollama", model, tokens);
     }
 
     private static object[] BuildMessages(string prompt, string? systemPrompt)
