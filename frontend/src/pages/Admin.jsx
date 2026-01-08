@@ -1565,6 +1565,77 @@ export default function Admin() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Credit Package Dialog */}
+            <Dialog open={!!editingPackage || creatingPackage} onOpenChange={() => { setEditingPackage(null); setCreatingPackage(false); }}>
+                <DialogContent className="bg-[#0B0F19] border-white/10 max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{creatingPackage ? 'Create New Credit Package' : 'Edit Credit Package'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Package Name</Label>
+                            <Input
+                                value={packageForm.name}
+                                onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
+                                placeholder="e.g., Starter Pack"
+                                className="bg-white/5 border-white/10"
+                            />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Credits</Label>
+                                <Input
+                                    type="number"
+                                    value={packageForm.credits}
+                                    onChange={(e) => setPackageForm({ ...packageForm, credits: parseInt(e.target.value) || 0 })}
+                                    placeholder="100"
+                                    className="bg-white/5 border-white/10"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Price ($)</Label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={packageForm.price}
+                                    onChange={(e) => setPackageForm({ ...packageForm, price: parseFloat(e.target.value) || 0 })}
+                                    placeholder="9.99"
+                                    className="bg-white/5 border-white/10"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div>
+                                <Label>Active</Label>
+                                <p className="text-xs text-gray-400">Package visible to users</p>
+                            </div>
+                            <Switch
+                                checked={packageForm.is_active}
+                                onCheckedChange={(checked) => setPackageForm({ ...packageForm, is_active: checked })}
+                            />
+                        </div>
+
+                        {packageForm.credits > 0 && packageForm.price > 0 && (
+                            <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                                <p className="text-sm text-cyan-400">
+                                    Price per credit: ${(packageForm.price / packageForm.credits).toFixed(4)}
+                                </p>
+                            </div>
+                        )}
+                        
+                        <Button 
+                            onClick={savePackage} 
+                            disabled={saving || !packageForm.name || packageForm.credits <= 0}
+                            className="w-full bg-cyan-500 hover:bg-cyan-600"
+                        >
+                            {saving ? 'Saving...' : (creatingPackage ? 'Create Package' : 'Save Changes')}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
