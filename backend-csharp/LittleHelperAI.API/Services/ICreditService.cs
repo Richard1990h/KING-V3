@@ -17,7 +17,7 @@ public interface ICreditService
     Task<bool> UpdateSettingAsync(string key, string value);
     Task<string?> GetSettingValueAsync(string key);
     
-    // Packages
+    // Credit Packages
     Dictionary<string, CreditPackageInfo> GetPackages();
     Task<List<CreditPackage>> GetCreditPackagesAsync();
     Task<CreditPackage> CreateCreditPackageAsync(CreateCreditPackageRequest request);
@@ -26,9 +26,11 @@ public interface ICreditService
     
     // Subscription Plans
     Task<List<SubscriptionPlan>> GetSubscriptionPlansAsync(bool activeOnly = true);
-    Task<SubscriptionPlan> CreateSubscriptionPlanAsync(CreatePlanRequest request);
-    Task<SubscriptionPlan?> UpdateSubscriptionPlanAsync(string planId, UpdatePlanRequest request);
-    Task<bool> DeactivateSubscriptionPlanAsync(string planId);
+    Task<SubscriptionPlan> CreateSubscriptionPlanAsync(CreateSubscriptionPlanRequest request);
+    Task<bool> UpdateSubscriptionPlanAsync(string planId, UpdateSubscriptionPlanRequest request);
+    Task<bool> DeleteSubscriptionPlanAsync(string planId);
+    
+    // Legacy subscription methods
     Task<int> DistributeDailyCreditsAsync();
     Task<UserSubscriptionResponse> GetUserSubscriptionAsync(string userId);
     Task<WorkspaceLimitResponse> CheckWorkspaceLimitAsync(string userId);
