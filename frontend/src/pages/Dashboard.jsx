@@ -41,9 +41,11 @@ export default function Dashboard() {
     const loadProjects = async () => {
         try {
             const res = await projectsAPI.getAll();
-            setProjects(res.data);
+            // Defensive: ensure projects is always an array
+            setProjects(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Failed to load projects:', error);
+            setProjects([]);
         } finally {
             setLoading(false);
         }
