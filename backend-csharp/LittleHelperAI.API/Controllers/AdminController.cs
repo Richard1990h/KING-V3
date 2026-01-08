@@ -176,7 +176,39 @@ public class AdminController : ControllerBase
     public async Task<ActionResult> GetFreeAIProviders()
     {
         var providers = await _aiService.GetFreeAIProvidersAsync();
-        return Ok(providers);
+        
+        // Map to frontend-expected format
+        var response = providers.Select(p => new
+        {
+            id = p.Id,
+            name = p.Name,
+            provider = p.Provider,
+            api_key = p.ApiKey,
+            model = p.Model,
+            enabled = p.IsEnabled,
+            is_enabled = p.IsEnabled,
+            priority = p.Priority,
+            requires_key = !string.Equals(p.Provider, "ollama", StringComparison.OrdinalIgnoreCase),
+            has_key = !string.IsNullOrEmpty(p.ApiKey),
+            models = GetModelsForProvider(p.Provider),
+            created_at = p.CreatedAt.ToString("o"),
+            updated_at = p.UpdatedAt.ToString("o")
+        });
+        
+        return Ok(response);
+    }
+    
+    private static List<string> GetModelsForProvider(string provider)
+    {
+        return provider.ToLower() switch
+        {
+            "groq" => new List<string> { "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768" },
+            "together" => new List<string> { "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo", "mistralai/Mixtral-8x7B-Instruct-v0.1" },
+            "huggingface" => new List<string> { "microsoft/DialoGPT-large", "google/flan-t5-large", "facebook/blenderbot-400M-distill" },
+            "openrouter" => new List<string> { "google/gemma-2-9b-it:free", "mistralai/mistral-7b-instruct:free", "meta-llama/llama-3-8b-instruct:free" },
+            "ollama" => new List<string> { "qwen2.5-coder:1.5b", "llama2", "mistral", "codellama" },
+            _ => new List<string>()
+        };
     }
 
     [HttpPut("free-ai-providers/{providerId}")]
