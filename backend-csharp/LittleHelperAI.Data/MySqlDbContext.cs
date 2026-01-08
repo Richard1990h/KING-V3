@@ -41,7 +41,9 @@ public interface IDbContext
     Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null);
     Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? param = null);
     Task<int> ExecuteAsync(string sql, object? param = null);
+    Task<T?> ExecuteScalarAsync<T>(string sql, object? param = null);
     Task InitializeAsync();
+    System.Data.IDbConnection CreateConnection();
 }
 
 // Custom type mapper for snake_case columns to PascalCase properties
@@ -141,7 +143,7 @@ public class MySqlDbContext : IDbContext
         }
     }
 
-    private MySqlConnection CreateConnection() => new MySqlConnection(_connectionString);
+    public System.Data.IDbConnection CreateConnection() => new MySqlConnection(_connectionString);
 
     public async Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
     {
