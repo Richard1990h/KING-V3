@@ -7,29 +7,29 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 1. **Multi-Agent Build System (P0)**: AI-powered project generation through plan → tasks → execution → file creation workflow
 2. **Global Assistant (P1)**: Floating chat widget available across all pages for quick AI assistance
 3. **Admin Panel Plans Management (P2)**: Separate management for Monthly Subscription Plans and Credit Add-on Packages
-4. **User Authentication**: Registration, login, JWT-based sessions
-5. **Project Management**: Create, view, edit projects with file storage
-6. **Credit System**: Daily credits for subscribers, add-on purchases
+4. **Real-time Collaboration**: WebSocket-based live editing with cursor positions and file sharing
+5. **Multiple AI Providers**: Groq, Together AI, OpenRouter, HuggingFace, Ollama support
 
 ## Tech Stack
-- **Backend**: C# ASP.NET Core 8.0, Dapper ORM
+- **Backend**: C# ASP.NET Core 8.0, Dapper ORM, WebSocket
 - **Frontend**: React 18, Tailwind CSS, Shadcn UI, Framer Motion
 - **Database**: MariaDB
-- **AI Integration**: Emergent LLM (OpenAI GPT-4o-mini via proxy)
+- **AI Integration**: Emergent LLM + Groq, Together AI, OpenRouter, HuggingFace, Ollama
 
 ## Architecture
 ```
 /app/
 ├── backend-csharp/          # ASP.NET Core Web API
 │   ├── LittleHelperAI.API/
-│   │   ├── Controllers/     # API endpoints
-│   │   ├── Services/        # Business logic
+│   │   ├── Controllers/     # API endpoints (including CollaborationController)
+│   │   ├── Services/        # Business logic (AIService, CollaborationService)
 │   │   └── Models/          # Data models
 │   ├── LittleHelperAI.Data/ # Data access layer
 │   └── LittleHelperAI.Agents/
 ├── frontend/                # React application
 │   └── src/
-│       ├── components/      # Reusable UI components (including CodeBlock)
+│       ├── components/      # UI components (CodeBlock, GlobalAssistant)
+│       ├── hooks/           # Custom hooks (useCollaboration)
 │       ├── pages/           # Route pages
 │       └── lib/             # Utilities and API client
 ├── database/                # SQL scripts
@@ -44,14 +44,25 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - `POST /api/ai/execute-task` - Execute task and generate files
 - `POST /api/assistant/chat` - Global assistant chat
 - `GET /api/conversations` - List user conversations
-- `GET /api/conversations/{id}` - Get conversation messages
 - `GET/POST/PUT/DELETE /api/admin/subscription-plans` - Plan CRUD
 - `GET/POST/PUT/DELETE /api/admin/credit-packages` - Package CRUD
+- `WS /api/collaboration/ws/{projectId}` - WebSocket for real-time collab
+- `POST /api/collaboration/{projectId}/share` - Create shareable link
+- `GET /api/collaboration/{projectId}/download` - Download project as ZIP
+
+## AI Providers Supported
+| Provider | Model | Status |
+|----------|-------|--------|
+| Emergent LLM | gpt-4o-mini | ✅ Active (default) |
+| Groq | llama-3.1-70b-versatile | ✅ Ready (needs key) |
+| Together AI | Llama-3.2-11B | ✅ Ready (needs key) |
+| OpenRouter | gemma-2-9b-it:free | ✅ Ready (needs key) |
+| HuggingFace | Mistral-7B-Instruct | ✅ Ready (needs key) |
+| Ollama | qwen2.5-coder:1.5b | ✅ Ready (local) |
 
 ## Test Credentials
 - **Test User**: test@example.com / test123
 - **Admin User**: admin@littlehelper.ai / admin123
-- **Admin User 2**: king@example.com / admin123
 
 ---
 
@@ -62,73 +73,60 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 #### P0 - Multi-Agent Build System
 - [x] `/api/ai/plan` endpoint generates structured build plans
 - [x] `/api/ai/execute-task` endpoint generates actual code files
-- [x] Backend parses AI response to extract files with path and content
-- [x] Support for both 'request' and 'prompt' field names from frontend
-- [x] Proper JSON parsing with fallback for non-JSON responses
-- [x] File explorer integration - files saved to database and displayed
+- [x] Fixed API path issues (removed duplicate /api prefix)
+- [x] E2E tested: User prompt → Plan → Approval → File creation ✓
 
 #### P1 - Global Assistant
 - [x] Floating chat bubble in bottom-right corner
-- [x] Opens/closes on click (z-index fixed at 9999)
-- [x] Sends messages to `/api/assistant/chat`
-- [x] Displays AI responses with proper formatting
-- [x] Shows user credits and conversation controls
-- [x] Conversations saved to database
+- [x] Opens/closes correctly
+- [x] Sends messages and displays AI responses
 
-#### P2 - Admin Plans Management
-- [x] Plans tab split into two sections:
-  - Monthly Subscription Plans (5 plans: Free, Starter, Pro, Team, Enterprise)
-  - Credit Add-on Packages (5+ packages with credits and prices)
-- [x] Full CRUD for subscription plans
-- [x] Full CRUD for credit packages
-- [x] API endpoints for both plan types
+#### P2 - Admin Plans Split
+- [x] Monthly Subscription Plans section
+- [x] Credit Add-on Packages section
+- [x] Full CRUD for both
 
-#### Additional Features Completed
-- [x] **Conversations API** (`/api/conversations`) - List and retrieve user chat history
-- [x] **Agent Pulsing Animation** - Enhanced glow effect when agents are working
-- [x] **CodeBlock Component** - Notepad++ style code display with:
-  - Syntax highlighting
-  - Line numbers
-  - Copy to clipboard
-  - Expand to fullscreen modal
-  - Download option
-- [x] **File Explorer Integration** - AI-generated files saved and displayed
-- [x] **Date Display Fix** - Project cards show correct date format
+#### Additional Features
+- [x] **Conversations API** - List and retrieve chat history
+- [x] **CodeBlock Component** - Notepad++ style code display
+- [x] **Agent Pulsing Animation** - Glow effect when working
+- [x] **File Explorer Integration** - AI-generated files displayed
 
-#### Other Working Features
-- [x] User authentication (login, register, JWT)
-- [x] Project creation and management
-- [x] File management within projects
-- [x] Admin System Health page with real metrics
-- [x] Free AI Providers management
-- [x] User management with role-based access
-- [x] Credit purchase and consumption tracking
+#### Real-time Collaboration
+- [x] `CollaborationService` - WebSocket connection management
+- [x] `CollaborationController` - API endpoints
+- [x] `useCollaboration` hook - React integration
+- [x] Share link generation with 7-day expiry
+- [x] Project download as ZIP
 
-### 🔄 Future Enhancements (Backlog)
+#### AI Provider Support
+- [x] All 6 providers implemented in AIService.cs
+- [x] Providers stored in database with API keys
+- [x] Priority-based fallback system
 
-#### Low Priority
-- [ ] Real-time collaboration features
-- [ ] More AI providers (Groq, Together, etc.)
+### 🔄 Future Enhancements
+
+- [ ] Google Drive OAuth integration for direct upload
+- [ ] Live cursor rendering in editor
 - [ ] Mobile responsive improvements
 - [ ] Docker support for deployment
 
 ---
 
-## Test Results
-- **Backend Tests**: 14/14 passed (100%)
-- **Frontend Tests**: 95% success rate
-- **Test Report**: `/app/test_reports/iteration_1.json`
-- **Test File**: `/app/tests/test_littlehelper_api.py`
+## E2E Test Results
+- **Multi-Agent Build**: ✅ PASSED
+  - Prompt: "Create a simple Python hello world file"
+  - Result: `hello.py` created with `print("Hello, World!")`
+- **Share Link**: ✅ PASSED
+  - Generated: `share_url` with 7-day expiry
 
 ## Known Working Features
 1. ✅ User login/logout
 2. ✅ Project creation
 3. ✅ AI build plan generation
-4. ✅ AI task execution with file generation
+4. ✅ AI task execution with file creation
 5. ✅ Global Assistant chat
-6. ✅ Conversation history storage
-7. ✅ Admin subscription plan management
-8. ✅ Admin credit package management
-9. ✅ System health monitoring
-10. ✅ Agent pulsing animations
-11. ✅ Code block display with syntax highlighting
+6. ✅ Admin subscription & credit management
+7. ✅ Project sharing via link
+8. ✅ Project download as ZIP
+9. ✅ Multiple AI providers
