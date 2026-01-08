@@ -38,7 +38,8 @@ public class SystemController : ControllerBase
             id = a.Id,
             name = a.Name,
             description = a.Description,
-            capabilities = a.Capabilities
+            color = a.Color,
+            icon = a.Icon
         }));
     }
 
@@ -130,7 +131,7 @@ public class SystemController : ControllerBase
                 content = response.Content,
                 provider = response.Provider,
                 model = response.Model,
-                tokens_used = response.TokensUsed
+                tokens_used = response.Tokens
             });
         }
         catch (Exception ex)
@@ -156,7 +157,7 @@ public class SystemController : ControllerBase
                 content = response.Content,
                 provider = response.Provider,
                 model = response.Model,
-                tokens_used = response.TokensUsed
+                tokens_used = response.Tokens
             });
         }
         catch (Exception ex)
