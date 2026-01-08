@@ -241,12 +241,14 @@ export default function Workspace() {
     };
 
     // Debounced auto-save
-    const debouncedSave = useCallback(debounce(saveFile, 2000), [selectedFile, fileContent, originalContent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debouncedSave = useCallback(debounce(saveFile, 2000), [selectedFile]);
 
     useEffect(() => {
         if (fileContent !== originalContent) {
             debouncedSave();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fileContent]);
 
     const createFile = async () => {
