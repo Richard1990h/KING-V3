@@ -284,5 +284,5 @@ Be practical and provide working code. Use proper formatting.";
 public record EstimateCostRequest(string? Prompt, string? Model);
 public record LLMGenerateRequest(string Prompt, string? SystemPrompt, int MaxTokens = 2000);
 public record AssistantChatRequest(string Message, string? ConversationId);
-public record BuildPlanRequest(string Prompt, string? ProjectId, string? Language, string[]? ExistingFiles);
-public record ExecuteTaskRequest(string TaskId, string TaskTitle, string TaskDescription, string? Agent, string? Context);
+public record BuildPlanRequest(string? Prompt, string? Request, string? ProjectId, string? Language, string[]? ExistingFiles, string[]? Agents);
+public record ExecuteTaskRequest(string? TaskId, string? Task, string? TaskTitle, string? TaskDescription, string? Agent, string? Context, string? ProjectId);
