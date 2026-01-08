@@ -973,10 +973,10 @@ export default function Admin() {
                                             <div key={entry.id} className="p-4">
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-medium text-sm mb-1 truncate">{entry.question_text}</p>
-                                                        <p className="text-xs text-gray-400 line-clamp-2">{entry.answer_text}</p>
+                                                        <p className="font-medium text-sm mb-1 truncate">{entry.question || entry.question_text}</p>
+                                                        <p className="text-xs text-gray-400 line-clamp-2">{entry.answer || entry.answer_text}</p>
                                                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                                            <span>Hits: {entry.hit_count}</span>
+                                                            <span>Hits: {entry.hitCount || entry.hit_count || entry.usage_count || 0}</span>
                                                             <span>Provider: {entry.provider || 'unknown'}</span>
                                                             <span className={entry.is_valid ? 'text-green-400' : 'text-red-400'}>
                                                                 {entry.is_valid ? 'Valid' : 'Invalid'}
