@@ -1,64 +1,141 @@
 # LittleHelper AI - Product Requirements Document
 
 ## Original Problem Statement
-Build a comprehensive AI-powered code generation platform with multi-agent capabilities. The application features a C# ASP.NET Core backend with React frontend, using MariaDB for data persistence.
+Build a comprehensive AI-powered code generation platform with multi-agent capabilities, real-time collaboration, and social features.
 
 ## Core Requirements
-1. **Multi-Agent Build System (P0)**: AI-powered project generation through plan → tasks → execution → file creation workflow
-2. **Global Assistant (P1)**: Floating chat widget available across all pages for quick AI assistance
-3. **Admin Panel Plans Management (P2)**: Separate management for Monthly Subscription Plans and Credit Add-on Packages
-4. **Real-time Collaboration**: WebSocket-based live editing with cursor positions and file sharing
-5. **Multiple AI Providers**: Groq, Together AI, OpenRouter, HuggingFace, Ollama support
+1. **Multi-Agent Build System**: AI-powered project generation (plan → tasks → execution → file creation)
+2. **Global Assistant**: Floating chat widget for quick AI assistance
+3. **Admin Plans Management**: Subscription Plans and Credit Packages
+4. **Real-time Collaboration**: WebSocket live editing + project sharing
+5. **Multiple AI Providers**: Groq, Together AI, OpenRouter, HuggingFace, Ollama
+6. **Friends System**: Discord-style friend requests and direct messaging
+7. **Credit Sharing**: Own credits vs Shared credits per project
 
 ## Tech Stack
 - **Backend**: C# ASP.NET Core 8.0, Dapper ORM, WebSocket
 - **Frontend**: React 18, Tailwind CSS, Shadcn UI, Framer Motion
 - **Database**: MariaDB
-- **AI Integration**: Emergent LLM + Groq, Together AI, OpenRouter, HuggingFace, Ollama
+- **AI Integration**: Emergent LLM + 5 additional providers
 
-## Architecture
-```
-/app/
-├── backend-csharp/          # ASP.NET Core Web API
-│   ├── LittleHelperAI.API/
-│   │   ├── Controllers/     # API endpoints (including CollaborationController)
-│   │   ├── Services/        # Business logic (AIService, CollaborationService)
-│   │   └── Models/          # Data models
-│   ├── LittleHelperAI.Data/ # Data access layer
-│   └── LittleHelperAI.Agents/
-├── frontend/                # React application
-│   └── src/
-│       ├── components/      # UI components (CodeBlock, GlobalAssistant)
-│       ├── hooks/           # Custom hooks (useCollaboration)
-│       ├── pages/           # Route pages
-│       └── lib/             # Utilities and API client
-├── database/                # SQL scripts
-└── tests/                   # Backend tests
-```
+---
+
+## Implementation Status (January 8, 2026)
+
+### ✅ Completed Features
+
+#### Core Features
+- [x] Multi-Agent Build System (E2E tested)
+- [x] Global Assistant Chat
+- [x] Admin Subscription Plans & Credit Packages CRUD
+- [x] CodeBlock Component (Notepad++ style)
+
+#### Real-time Collaboration
+- [x] WebSocket service (`CollaborationService.cs`)
+- [x] Share link generation with 7-day expiry
+- [x] Project download as ZIP
+- [x] `useCollaboration` React hook
+
+#### Friends System (Discord-style)
+- [x] Send/accept/deny friend requests
+- [x] Friends list management
+- [x] Direct messages (1-to-1 chat)
+- [x] System messages (friend accepted, project shared)
+- [x] Unread message count
+
+#### Credit System
+- [x] "Use Own Credits" mode (default)
+- [x] "Shared Credits" mode (owner pays)
+- [x] Credit usage logging with audit trail
+
+#### Project Collaboration
+- [x] Add friends as collaborators
+- [x] Permission levels: view, edit, admin
+- [x] Remove collaborator
+- [x] Only friends can be added
+
+#### Admin Features
+- [x] Google Drive config in admin panel
+- [x] All AI providers management
+
+---
 
 ## Key API Endpoints
-- `POST /api/auth/login` - User authentication
-- `POST /api/auth/register` - User registration
-- `GET/POST /api/projects` - Project management
-- `POST /api/ai/plan` - Generate build plan from prompt
-- `POST /api/ai/execute-task` - Execute task and generate files
-- `POST /api/assistant/chat` - Global assistant chat
-- `GET /api/conversations` - List user conversations
-- `GET/POST/PUT/DELETE /api/admin/subscription-plans` - Plan CRUD
-- `GET/POST/PUT/DELETE /api/admin/credit-packages` - Package CRUD
-- `WS /api/collaboration/ws/{projectId}` - WebSocket for real-time collab
-- `POST /api/collaboration/{projectId}/share` - Create shareable link
-- `GET /api/collaboration/{projectId}/download` - Download project as ZIP
 
-## AI Providers Supported
-| Provider | Model | Status |
-|----------|-------|--------|
-| Emergent LLM | gpt-4o-mini | ✅ Active (default) |
-| Groq | llama-3.1-70b-versatile | ✅ Ready (needs key) |
-| Together AI | Llama-3.2-11B | ✅ Ready (needs key) |
-| OpenRouter | gemma-2-9b-it:free | ✅ Ready (needs key) |
-| HuggingFace | Mistral-7B-Instruct | ✅ Ready (needs key) |
-| Ollama | qwen2.5-coder:1.5b | ✅ Ready (local) |
+### Friends API
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/friends` | GET | Get friends list |
+| `/api/friends/request` | POST | Send friend request |
+| `/api/friends/requests` | GET | Get pending requests |
+| `/api/friends/requests/{id}` | PUT | Accept/deny request |
+| `/api/friends/{userId}` | DELETE | Remove friend |
+| `/api/friends/dm/{userId}` | GET | Get DM messages |
+| `/api/friends/dm/{userId}` | POST | Send DM |
+| `/api/friends/dm/unread` | GET | Get unread count |
+
+### Collaborators API
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/projects/{id}/collaborators` | GET | Get collaborators |
+| `/api/projects/{id}/collaborators` | POST | Add collaborator |
+| `/api/projects/{id}/collaborators/credit-mode` | PUT | Set credit mode |
+
+### Collaboration API
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/collaboration/ws/{projectId}` | WS | WebSocket connection |
+| `/api/collaboration/{id}/share` | POST | Create share link |
+| `/api/collaboration/{id}/download` | GET | Download as ZIP |
+
+---
+
+## Database Schema (New Tables)
+
+```sql
+-- Friend Requests
+friend_requests (id, sender_id, receiver_id, status, created_at, updated_at)
+
+-- Friends (bidirectional)
+friends (id, user_id, friend_user_id, created_at)
+
+-- Direct Messages
+direct_messages (id, sender_id, receiver_id, message, message_type, is_read, created_at)
+
+-- Project Collaborators
+project_collaborators (id, project_id, user_id, permission_level, invited_by, created_at)
+
+-- Credit Usage Logs
+credit_usage_logs (id, project_id, user_id, credit_source, amount, action_type, description, created_at)
+
+-- Project Shares
+project_shares (id, project_id, share_token, created_by, can_edit, expires_at, created_at)
+
+-- Google Drive Config
+google_drive_config (id, client_id, client_secret, redirect_uri, is_configured, updated_at)
+```
+
+---
+
+## Credit Rules
+
+### Use Own Credits (Default)
+- Each collaborator spends their own credits
+- AI requests blocked if user has insufficient credits
+- Usage logged per user
+
+### Shared Credits
+- All AI usage draws from project owner's balance
+- Owner pays for all collaborator AI requests
+- Usage logged with `credit_source: 'shared'`
+
+---
+
+## Test Results
+- **Friends API**: ✅ All endpoints working
+- **DM System**: ✅ Messages sent/received correctly
+- **Share Links**: ✅ Generated and validated
+- **AI Build E2E**: ✅ Files created successfully
 
 ## Test Credentials
 - **Test User**: test@example.com / test123
@@ -66,67 +143,8 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 
 ---
 
-## Implementation Status
-
-### ✅ Completed (January 8, 2026)
-
-#### P0 - Multi-Agent Build System
-- [x] `/api/ai/plan` endpoint generates structured build plans
-- [x] `/api/ai/execute-task` endpoint generates actual code files
-- [x] Fixed API path issues (removed duplicate /api prefix)
-- [x] E2E tested: User prompt → Plan → Approval → File creation ✓
-
-#### P1 - Global Assistant
-- [x] Floating chat bubble in bottom-right corner
-- [x] Opens/closes correctly
-- [x] Sends messages and displays AI responses
-
-#### P2 - Admin Plans Split
-- [x] Monthly Subscription Plans section
-- [x] Credit Add-on Packages section
-- [x] Full CRUD for both
-
-#### Additional Features
-- [x] **Conversations API** - List and retrieve chat history
-- [x] **CodeBlock Component** - Notepad++ style code display
-- [x] **Agent Pulsing Animation** - Glow effect when working
-- [x] **File Explorer Integration** - AI-generated files displayed
-
-#### Real-time Collaboration
-- [x] `CollaborationService` - WebSocket connection management
-- [x] `CollaborationController` - API endpoints
-- [x] `useCollaboration` hook - React integration
-- [x] Share link generation with 7-day expiry
-- [x] Project download as ZIP
-
-#### AI Provider Support
-- [x] All 6 providers implemented in AIService.cs
-- [x] Providers stored in database with API keys
-- [x] Priority-based fallback system
-
-### 🔄 Future Enhancements
-
-- [ ] Google Drive OAuth integration for direct upload
+## Future Enhancements
 - [ ] Live cursor rendering in editor
+- [ ] Google Drive OAuth for direct upload
 - [ ] Mobile responsive improvements
-- [ ] Docker support for deployment
-
----
-
-## E2E Test Results
-- **Multi-Agent Build**: ✅ PASSED
-  - Prompt: "Create a simple Python hello world file"
-  - Result: `hello.py` created with `print("Hello, World!")`
-- **Share Link**: ✅ PASSED
-  - Generated: `share_url` with 7-day expiry
-
-## Known Working Features
-1. ✅ User login/logout
-2. ✅ Project creation
-3. ✅ AI build plan generation
-4. ✅ AI task execution with file creation
-5. ✅ Global Assistant chat
-6. ✅ Admin subscription & credit management
-7. ✅ Project sharing via link
-8. ✅ Project download as ZIP
-9. ✅ Multiple AI providers
+- [ ] Real-time DM notifications via WebSocket
