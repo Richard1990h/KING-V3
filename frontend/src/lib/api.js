@@ -303,4 +303,11 @@ export const healthAPI = {
     check: () => api.get('/health')
 };
 
+// Site Settings API (announcements, maintenance mode, etc.)
+export const siteSettingsAPI = {
+    get: () => api.get('/site-settings'),
+    getPublic: () => api.get('/site-settings/public'),
+    update: (settings) => api.put('/site-settings', settings)
+};
+
 export default api;
