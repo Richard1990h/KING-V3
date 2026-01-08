@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using LittleHelperAI.API.Services;
 using LittleHelperAI.Data.Models;
+using LittleHelperAI.Data;
 
 namespace LittleHelperAI.API.Controllers;
 
@@ -15,6 +16,7 @@ public class AdminController : ControllerBase
     private readonly ICreditService _creditService;
     private readonly IJobOrchestrationService _jobService;
     private readonly IAIService _aiService;
+    private readonly IDbContext _db;
     private readonly IConfiguration _config;
     private readonly ILogger<AdminController> _logger;
 
@@ -23,6 +25,7 @@ public class AdminController : ControllerBase
         ICreditService creditService,
         IJobOrchestrationService jobService,
         IAIService aiService,
+        IDbContext db,
         IConfiguration config,
         ILogger<AdminController> logger)
     {
