@@ -1360,6 +1360,148 @@ export default function Admin() {
                         </div>
                     </TabsContent>
 
+                    {/* Site Settings Tab - Announcements & Admin Features */}
+                    <TabsContent value="site-settings">
+                        <div className="space-y-6">
+                            {/* Announcement Banner */}
+                            <div className="glass-card rounded-xl p-6">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <MessageSquare className="w-5 h-5 text-cyan-400" />
+                                    Login Page Announcement
+                                </h3>
+                                <p className="text-sm text-gray-400 mb-4">
+                                    Display a message to all users on the login page (e.g., maintenance notices, early access warnings)
+                                </p>
+                                
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <Label>Enable Announcement</Label>
+                                        <Switch
+                                            checked={siteSettings.announcement_enabled}
+                                            onCheckedChange={(checked) => setSiteSettings(prev => ({ ...prev, announcement_enabled: checked }))}
+                                        />
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <Label>Message Type</Label>
+                                        <Select
+                                            value={siteSettings.announcement_type}
+                                            onValueChange={(value) => setSiteSettings(prev => ({ ...prev, announcement_type: value }))}
+                                        >
+                                            <SelectTrigger className="bg-white/5 border-white/10">
+                                                <SelectValue placeholder="Select type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="info">ℹ️ Info (Blue)</SelectItem>
+                                                <SelectItem value="warning">⚠️ Warning (Yellow)</SelectItem>
+                                                <SelectItem value="success">✅ Success (Green)</SelectItem>
+                                                <SelectItem value="error">❌ Error (Red)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <Label>Announcement Message</Label>
+                                        <Textarea
+                                            value={siteSettings.announcement_message}
+                                            onChange={(e) => setSiteSettings(prev => ({ ...prev, announcement_message: e.target.value }))}
+                                            placeholder="e.g., 🚧 This server is in early access development. Everything is subject to change. Expect bugs - we're working through them!"
+                                            className="bg-white/5 border-white/10 min-h-[100px]"
+                                        />
+                                    </div>
+                                    
+                                    {/* Preview */}
+                                    {siteSettings.announcement_message && (
+                                        <div className="space-y-2">
+                                            <Label className="text-gray-400">Preview:</Label>
+                                            <div className={`px-4 py-3 rounded-lg border ${
+                                                siteSettings.announcement_type === 'info' ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' :
+                                                siteSettings.announcement_type === 'warning' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' :
+                                                siteSettings.announcement_type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-300' :
+                                                'bg-red-500/10 border-red-500/30 text-red-300'
+                                            }`}>
+                                                <p className="text-sm">{siteSettings.announcement_message}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Admin Auto-Friend Setting */}
+                            <div className="glass-card rounded-xl p-6">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <Users className="w-5 h-5 text-fuchsia-400" />
+                                    Admin Social Settings
+                                </h3>
+                                <p className="text-sm text-gray-400 mb-4">
+                                    Configure how admins interact with users in the friends system
+                                </p>
+                                
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
+                                        <div>
+                                            <Label className="text-white">Auto-Friend Admins</Label>
+                                            <p className="text-sm text-gray-400 mt-1">
+                                                Automatically add all admins as friends to every user. This allows admins to send direct messages and provide support.
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={siteSettings.admins_auto_friend}
+                                            onCheckedChange={(checked) => setSiteSettings(prev => ({ ...prev, admins_auto_friend: checked }))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Maintenance Mode */}
+                            <div className="glass-card rounded-xl p-6">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5 text-amber-400" />
+                                    Maintenance Mode
+                                </h3>
+                                <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
+                                    <div>
+                                        <Label className="text-white">Enable Maintenance Mode</Label>
+                                        <p className="text-sm text-gray-400 mt-1">
+                                            When enabled, only admins can log in. Regular users will see a maintenance message.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        checked={siteSettings.maintenance_mode}
+                                        onCheckedChange={(checked) => setSiteSettings(prev => ({ ...prev, maintenance_mode: checked }))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Save Button */}
+                            <div className="flex justify-end">
+                                <Button
+                                    onClick={async () => {
+                                        setSavingSiteSettings(true);
+                                        try {
+                                            await siteSettingsAPI.update(siteSettings);
+                                            alert('Site settings saved successfully!');
+                                        } catch (error) {
+                                            console.error('Failed to save site settings:', error);
+                                            alert('Failed to save settings. Please try again.');
+                                        } finally {
+                                            setSavingSiteSettings(false);
+                                        }
+                                    }}
+                                    disabled={savingSiteSettings}
+                                    className="bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:from-fuchsia-600 hover:to-cyan-600"
+                                >
+                                    {savingSiteSettings ? (
+                                        <RefreshCw size={16} className="mr-2 animate-spin" />
+                                    ) : (
+                                        <CheckCircle size={16} className="mr-2" />
+                                    )}
+                                    Save Site Settings
+                                </Button>
+                            </div>
+                        </div>
+                    </TabsContent>
+
                     {/* Settings Tab */}
                     <TabsContent value="settings">
                         <div className="space-y-6">
