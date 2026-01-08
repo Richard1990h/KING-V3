@@ -351,37 +351,65 @@ export default function Login() {
                     </div>
                     
                     <h1 className="text-2xl font-bold text-center mb-2">Welcome back</h1>
-                    <p className="text-gray-400 text-center mb-8">Sign in to continue building</p>
+                    <p className="text-gray-400 text-center mb-6">Sign in to continue building</p>
+                    
+                    {/* Admin Announcement Banner */}
+                    {announcement && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`px-4 py-3 rounded-lg mb-6 border ${announcementStyles[announcement.announcement_type] || announcementStyles.info}`}
+                        >
+                            <div className="flex items-start gap-3">
+                                {(() => {
+                                    const Icon = announcementIcons[announcement.announcement_type] || Info;
+                                    return <Icon size={18} className="mt-0.5 flex-shrink-0" />;
+                                })()}
+                                <p className="text-sm">{announcement.announcement_message}</p>
+                            </div>
+                        </motion.div>
+                    )}
                     
                     {error && (
                         <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={`px-4 py-3 rounded-lg mb-6 ${
-                                error.includes('Backend unavailable') || error.includes('connection')
+                                backendDown
                                     ? 'bg-amber-500/10 border border-amber-500/20'
                                     : 'bg-red-500/10 border border-red-500/20'
                             }`}
                             data-testid="login-error"
                         >
-                            {error.includes('Backend unavailable') || error.includes('connection') ? (
-                                <div className="space-y-2">
+                            {backendDown ? (
+                                <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-amber-400">
                                         <AlertTriangle size={18} />
                                         <span className="font-medium">Service Temporarily Unavailable</span>
                                     </div>
                                     <p className="text-sm text-amber-300/80">
-                                        The server is currently starting up or undergoing maintenance. Please try again in a moment.
+                                        The server is currently starting up or undergoing maintenance.
                                     </p>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => { setError(''); setLoading(false); }}
-                                        className="mt-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-                                    >
-                                        Dismiss
-                                    </Button>
+                                    <div className="flex gap-2 pt-1">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowGame(true)}
+                                            className="border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-500/10"
+                                        >
+                                            🎮 Play Game While Waiting
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleRetryConnection}
+                                            className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                                        >
+                                            Retry
+                                        </Button>
+                                    </div>
                                 </div>
                             ) : (
                                 <span className="text-red-400">{error}</span>
