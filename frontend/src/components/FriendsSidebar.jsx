@@ -87,7 +87,17 @@ export function FriendsSidebar({ isOpen, onClose }) {
             setAddEmail('');
             loadRequests();
         } catch (error) {
-            setAddError(error.response?.data?.detail || 'Failed to send request');
+            const errorMessage = error.response?.data?.detail || error.message || 'Failed to send request';
+            // Check if backend is unavailable
+            if (error.code === 'ERR_NETWORK' || error.message?.includes('Network')) {
+                setAddError('Server is currently unavailable. Please try again later.');
+            } else if (error.response?.status === 404) {
+                setAddError('User not found. Please check the email address.');
+            } else if (error.response?.status === 409) {
+                setAddError('Friend request already exists or you are already friends.');
+            } else {
+                setAddError(errorMessage);
+            }
         } finally {
             setLoading(false);
         }
