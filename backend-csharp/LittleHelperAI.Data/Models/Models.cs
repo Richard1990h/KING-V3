@@ -673,3 +673,50 @@ public class TosVersion
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 }
+
+
+// Site Settings - Admin-configurable site-wide settings
+public class SiteSettings
+{
+    [Column("id")]
+    public string Id { get; set; } = "default";
+    
+    [Column("announcement_enabled")]
+    public bool AnnouncementEnabled { get; set; } = false;
+    
+    [Column("announcement_message")]
+    public string? AnnouncementMessage { get; set; }
+    
+    [Column("announcement_type")]
+    public string AnnouncementType { get; set; } = "info"; // info, warning, success, error
+    
+    [Column("maintenance_mode")]
+    public bool MaintenanceMode { get; set; } = false;
+    
+    [Column("admins_auto_friend")]
+    public bool AdminsAutoFriend { get; set; } = true;
+    
+    [Column("updated_at")]
+    public DateTime UpdatedAt { get; set; }
+    
+    [Column("updated_by")]
+    public string? UpdatedBy { get; set; }
+}
+
+// Site Settings Request/Response DTOs
+public class SiteSettingsRequest
+{
+    public bool? AnnouncementEnabled { get; set; }
+    public string? AnnouncementMessage { get; set; }
+    public string? AnnouncementType { get; set; }
+    public bool? MaintenanceMode { get; set; }
+    public bool? AdminsAutoFriend { get; set; }
+}
+
+public class PublicSiteSettings
+{
+    public bool AnnouncementEnabled { get; set; }
+    public string? AnnouncementMessage { get; set; }
+    public string AnnouncementType { get; set; } = "info";
+    public bool MaintenanceMode { get; set; }
+}
