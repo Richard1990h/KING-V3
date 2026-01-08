@@ -512,6 +512,10 @@ export default function Admin() {
                             <Server size={16} className="mr-2" />
                             System Health
                         </TabsTrigger>
+                        <TabsTrigger value="site-settings" className="data-[state=active]:bg-fuchsia-500/20">
+                            <MessageSquare size={16} className="mr-2" />
+                            Site Settings
+                        </TabsTrigger>
                         <TabsTrigger value="settings" className="data-[state=active]:bg-fuchsia-500/20">
                             <Settings size={16} className="mr-2" />
                             Settings
