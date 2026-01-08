@@ -478,11 +478,24 @@ INSERT INTO `user_themes` (`user_id`, `primary_color`, `secondary_color`, `backg
 ('test-user-001', '#d946ef', '#06b6d4', '#030712', '#0B0F19', '#ffffff', '#a855f7', '#d946ef');
 
 -- =====================================================
+-- INSERT KING ADMIN USER
+-- Email: king@example.com
+-- Password: king123 (SHA256 hashed)
+-- =====================================================
+INSERT INTO `users` (`id`, `email`, `name`, `display_name`, `password_hash`, `role`, `credits`, `credits_enabled`, `plan`, `language`, `tos_accepted`, `tos_accepted_at`, `tos_version`, `created_at`) VALUES
+('king-admin-001', 'king@example.com', 'King Admin', 'King', 'r9Nw+28uMjWOzYBdVDDR502p9PopmTzsduIyClt6VS4=', 'admin', 999999.0000, 1, 'enterprise', 'en', 1, NOW(), '1.0', NOW());
+
+-- Insert king admin theme
+INSERT INTO `user_themes` (`user_id`, `primary_color`, `secondary_color`, `background_color`, `card_color`, `text_color`, `hover_color`, `credits_color`) VALUES
+('king-admin-001', '#d946ef', '#06b6d4', '#030712', '#0B0F19', '#ffffff', '#a855f7', '#d946ef');
+
+-- =====================================================
 -- SETUP COMPLETE!
 -- =====================================================
 -- 
 -- LOGIN CREDENTIALS:
 --   Admin: admin@littlehelper.ai / admin123
+--   Admin: king@example.com / admin123
 --   Test:  test@example.com / test123
 --
 -- Tables created: 21
