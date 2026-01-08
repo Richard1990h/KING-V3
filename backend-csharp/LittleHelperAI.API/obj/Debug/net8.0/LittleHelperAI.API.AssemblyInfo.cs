@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LittleHelperAI.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aafe1d86543c7f4151652257eed37bf04aec7967")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+037c67c848e0ae6f63bf422293c749d14216e9c1")]
 [assembly: System.Reflection.AssemblyProductAttribute("LittleHelperAI.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LittleHelperAI.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
