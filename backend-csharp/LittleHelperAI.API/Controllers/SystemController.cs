@@ -197,7 +197,7 @@ public class SystemController : ControllerBase
                 return Unauthorized(new { detail = "User not authenticated" });
             }
 
-            var connectionString = _config.GetConnectionString("DefaultConnection");
+            var connectionString = _config.GetConnectionString("MySQL");
             using var conn = new MySqlConnector.MySqlConnection(connectionString);
             await conn.OpenAsync();
 
@@ -250,7 +250,7 @@ public class SystemController : ControllerBase
         {
             var userId = User.FindFirst("user_id")?.Value ?? "";
             
-            var connectionString = _config.GetConnectionString("DefaultConnection");
+            var connectionString = _config.GetConnectionString("MySQL");
             using var conn = new MySqlConnector.MySqlConnection(connectionString);
             await conn.OpenAsync();
 
@@ -296,7 +296,7 @@ public class SystemController : ControllerBase
     {
         try
         {
-            var connectionString = _config.GetConnectionString("DefaultConnection");
+            var connectionString = _config.GetConnectionString("MySQL");
             using var conn = new MySqlConnector.MySqlConnection(connectionString);
             await conn.OpenAsync();
 
