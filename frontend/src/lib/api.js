@@ -184,6 +184,11 @@ export const adminAPI = {
     createSubscriptionPlan: (data) => api.post('/admin/subscription-plans', data),
     updateSubscriptionPlan: (planId, data) => api.put(`/admin/subscription-plans/${planId}`, data),
     deleteSubscriptionPlan: (planId) => api.delete(`/admin/subscription-plans/${planId}`),
+    // Credit Package Management (Add-ons)
+    getCreditPackages: () => api.get('/admin/credit-packages'),
+    createCreditPackage: (data) => api.post('/admin/credit-packages', data),
+    updateCreditPackage: (packageId, data) => api.put(`/admin/credit-packages/${packageId}`, data),
+    deleteCreditPackage: (packageId) => api.delete(`/admin/credit-packages/${packageId}`),
     // Legacy plan endpoints
     createPlan: (data) => api.post('/admin/plans', data),
     updatePlan: (planId, data) => api.put(`/admin/plans/${planId}`, data),
