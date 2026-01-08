@@ -178,12 +178,12 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpDelete("{projectId}/chat")]
-    public async Task<ActionResult> ClearChatHistory(string projectId)
+    public Task<ActionResult> ClearChatHistory(string projectId)
     {
         // Mark messages as deleted
         var userId = GetUserId();
         // For now just return success - in production would update database
-        return Ok(new { message = "Chat history cleared" });
+        return Task.FromResult<ActionResult>(Ok(new { message = "Chat history cleared" }));
     }
 }
 
