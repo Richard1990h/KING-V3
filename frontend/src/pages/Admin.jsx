@@ -25,7 +25,8 @@ import {
     Search, Edit2, Trash2, Shield, User, Activity, Database, 
     Server, Brain, Settings, Play, RefreshCw, AlertCircle, CheckCircle,
     XCircle, Clock, BookOpen, Package, Plus, DollarSign, Layers,
-    Globe, Palette, Bot, Key, Eye, EyeOff, MapPin, MessageSquare
+    Globe, Palette, Bot, Key, Eye, EyeOff, MapPin, MessageSquare,
+    HardDrive, Wifi, Cpu, MemoryStick
 } from 'lucide-react';
 
 // Health Badge component
