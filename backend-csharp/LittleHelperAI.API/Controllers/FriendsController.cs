@@ -316,10 +316,23 @@ public class FriendsController : ControllerBase
         var messageId = Guid.NewGuid().ToString();
         var createdAt = DateTime.UtcNow;
         
+        // Get sender name for notification
+        var senderUser = await _db.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT COALESCE(display_name, name, email) as name FROM users WHERE id = @UserId",
+            new { UserId = userId });
+
         await _db.ExecuteAsync(@"
             INSERT INTO direct_messages (id, sender_id, receiver_id, message, message_type, created_at)
             VALUES (@Id, @SenderId, @ReceiverId, @Message, 'text', @CreatedAt)",
             new { Id = messageId, SenderId = userId, ReceiverId = friendUserId, Message = dto.Message.Trim(), CreatedAt = createdAt });
+
+        // Send real-time notification to receiver
+        await _notificationService.NotifyNewDirectMessage(
+            friendUserId,
+            userId!,
+            (string)senderUser.name,
+            dto.Message.Trim()
+        );
 
         return Ok(new { 
             id = messageId, 
