@@ -789,7 +789,7 @@ export function WaveDefenseGame({ onRetryConnection }) {
             cancelAnimationFrame(animationId);
             canvas.removeEventListener('mousemove', handleMouseMove);
         };
-    }, [gameState, wave, upgrades, troops, playerHp, playerMaxHp, baseHp, baseMaxHp, playSound, highScore]);
+    }, [gameState, wave, upgrades, troops, playerHp, playerMaxHp, baseHp, baseMaxHp, playSound, highScore, getPlayerDamage, getPlayerFireRate, getPlayerArmor, getTurretDamage]);
 
     // ========================================================================
     // RENDER
