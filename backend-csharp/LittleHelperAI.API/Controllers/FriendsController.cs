@@ -106,6 +106,11 @@ public class FriendsController : ControllerBase
                 return BadRequest(new { detail = "Friend request already pending" });
         }
 
+        // Get sender name for notification
+        var senderUser = await _db.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT COALESCE(display_name, name, email) as name FROM users WHERE id = @UserId",
+            new { UserId = userId });
+
         // Create friend request
         var requestId = Guid.NewGuid().ToString();
         await _db.ExecuteAsync(@"
@@ -114,6 +119,13 @@ public class FriendsController : ControllerBase
             new { Id = requestId, SenderId = userId, ReceiverId = targetUser.id });
 
         _logger.LogInformation("Friend request sent from {0} to {1}", userId, (string)targetUser.id);
+
+        // Send real-time notification
+        await _notificationService.NotifyFriendRequest(
+            (string)targetUser.id, 
+            userId!, 
+            (string)senderUser.name
+        );
 
         return Ok(new { 
             message = "Friend request sent", 
