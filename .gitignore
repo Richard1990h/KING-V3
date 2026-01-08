@@ -92,3 +92,7 @@ Thumbs.db
 *.tar.gz
 *.tar
 .cache/
+-e 
+# Environment files
+*.env
+*.env.*
