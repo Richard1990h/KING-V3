@@ -426,9 +426,12 @@ public class AdminController : ControllerBase
         var response = activity.Select(a => new
         {
             id = a.Id,
-            user_id = a.UserId,
-            project_id = a.ProjectId,
-            job_id = a.JobId,
+            userId = a.UserId,
+            user_id = a.UserId, // Alias
+            projectId = a.ProjectId,
+            project_id = a.ProjectId, // Alias
+            jobId = a.JobId,
+            job_id = a.JobId, // Alias
             agentId = a.AgentId,
             agent_id = a.AgentId, // Alias
             action = a.Action,
@@ -446,6 +449,40 @@ public class AdminController : ControllerBase
         });
         
         return Ok(response);
+    }
+
+    // ==================== SUBSCRIPTION PLANS ====================
+
+    [HttpGet("subscription-plans")]
+    public async Task<ActionResult> GetSubscriptionPlans()
+    {
+        var plans = await _creditService.GetSubscriptionPlansAsync();
+        return Ok(plans);
+    }
+
+    [HttpPost("subscription-plans")]
+    public async Task<ActionResult> CreateSubscriptionPlan([FromBody] CreateSubscriptionPlanRequest request)
+    {
+        var plan = await _creditService.CreateSubscriptionPlanAsync(request);
+        return Ok(plan);
+    }
+
+    [HttpPut("subscription-plans/{planId}")]
+    public async Task<ActionResult> UpdateSubscriptionPlan(string planId, [FromBody] UpdateSubscriptionPlanRequest request)
+    {
+        var success = await _creditService.UpdateSubscriptionPlanAsync(planId, request);
+        if (!success)
+            return NotFound(new { detail = "Plan not found" });
+        return Ok(new { message = "Plan updated" });
+    }
+
+    [HttpDelete("subscription-plans/{planId}")]
+    public async Task<ActionResult> DeleteSubscriptionPlan(string planId)
+    {
+        var success = await _creditService.DeleteSubscriptionPlanAsync(planId);
+        if (!success)
+            return NotFound(new { detail = "Plan not found" });
+        return Ok(new { message = "Plan deleted" });
     }
 }
 
