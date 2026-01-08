@@ -377,7 +377,7 @@ export default function Workspace() {
         
         try {
             // Add user message to chat
-            setChatMessages(prev => [...prev, { 
+            setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                 role: 'user', 
                 content: message, 
                 timestamp: new Date().toISOString() 
@@ -390,8 +390,9 @@ export default function Workspace() {
                 // Regular chat - just get AI response
                 const res = await chatAPI.send(projectId, message, enabledAgents);
                 
-                // Clean up AI response - remove raw JSON if present
-                let cleanContent = res.data.ai_message.content;
+                // Defensive: safely access response data
+                const aiMessage = res.data?.ai_message || res.data;
+                let cleanContent = aiMessage?.content || 'No response received';
                 
                 // Check if response contains file info and clean it
                 if (cleanContent.includes('FILE:') || cleanContent.includes('```')) {
@@ -405,9 +406,11 @@ export default function Workspace() {
                     cleanContent = summaryLines.join('\n').trim() || 'Code has been generated and added to your files.';
                 }
                 
-                setChatMessages(prev => [...prev, { 
-                    ...res.data.ai_message,
-                    content: cleanContent
+                setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
+                    ...aiMessage,
+                    content: cleanContent,
+                    role: aiMessage?.role || 'assistant',
+                    timestamp: aiMessage?.timestamp || new Date().toISOString()
                 }]);
                 
                 // Refresh files list to show any newly created files
@@ -417,13 +420,13 @@ export default function Workspace() {
         } catch (error) {
             console.error('Failed to send message:', error);
             if (error.response?.status === 402) {
-                setChatMessages(prev => [...prev, { 
+                setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                     role: 'system', 
                     content: t('error_insufficient_credits', 'Insufficient credits. Please purchase more credits to continue.'), 
                     timestamp: new Date().toISOString() 
                 }]);
             } else {
-                setChatMessages(prev => [...prev, { 
+                setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                     role: 'system', 
                     content: `Error: ${error.response?.data?.detail || error.message}`, 
                     timestamp: new Date().toISOString() 
