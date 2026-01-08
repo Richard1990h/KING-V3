@@ -7,9 +7,6 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - **Backend**: C# ASP.NET Core 8.0, Dapper ORM, WebSocket, MariaDB/MySQL
 - **Frontend**: React 18, Tailwind CSS, Shadcn UI, Framer Motion
 - **Database**: MariaDB (MySQL compatible)
-- **AI Integration**: Emergent LLM + 5 additional providers
-
-> **IMPORTANT**: The backend must remain C# ASP.NET Core. No rewrites permitted.
 
 ---
 
@@ -18,74 +15,81 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 ### ✅ Completed Features
 
 #### Core Features
-- [x] Multi-Agent Build System (Planner → Developer → Verifier)
-- [x] Global Assistant Chat (floating widget)
-- [x] Admin Panel (Plans & Credits CRUD)
-- [x] CodeBlock Component (syntax highlighting)
+- [x] Multi-Agent Build System
+- [x] Global Assistant Chat
+- [x] Admin Panel (Plans, Credits, Users CRUD)
+- [x] CodeBlock Component
 
-#### Real-time Collaboration
-- [x] WebSocket service (C#)
-- [x] `useCollaboration` hook with cursor tracking
-- [x] Share links, ZIP download
-- [x] CollaboratorAvatars component
-
-#### Friends & DM System
-- [x] Friend requests API
-- [x] Direct messages
-- [x] Unread tracking
+#### Social & Collaboration
+- [x] Friends system (requests, accept/deny)
+- [x] Direct messaging
+- [x] WebSocket collaboration service
 - [x] FriendsSidebar component
 
-#### Frontend (January 8, 2026)
-- [x] **Defensive Error Handling** - All `.map()` with null checks
-- [x] **Improved Error Messages** - "Service Temporarily Unavailable" for backend errors
-- [x] **CodeRunner** - "Run Code" button in editor
-- [x] **Save to Drive** - Button in workspace header
-- [x] **useNotifications Hook** - WebSocket + polling fallback
-- [x] **Notification Badge** - On Friends toggle button
-- [x] **Mobile Responsiveness** - Responsive header, panels, buttons
+#### Frontend Features
+- [x] Defensive `.map()` error handling
+- [x] Mobile responsive workspace
+- [x] useNotifications hook
+- [x] Notification badge
+
+#### NEW: Admin Site Settings (January 8, 2026)
+- [x] **Announcement Banner** - Admin-configurable message on login page
+  - Enable/disable toggle
+  - Message type (info/warning/success/error)
+  - Custom message text
+  - Live preview
+- [x] **Auto-Friend Admins** - Option to automatically add admins to all users' friends
+- [x] **Maintenance Mode** - Lock out non-admin users
+
+#### NEW: Downtime Entertainment (January 8, 2026)
+- [x] **Mini Shooter Game** - FPS-style target shooting game when backend unavailable
+  - Score tracking with high score persistence
+  - 3 lives system
+  - Level progression (difficulty increases)
+  - Combo multiplier
+  - Sound effects (toggleable)
+  - Touch support for mobile
+  - "Check Server Status" button
+  - "Back to Login" button
 
 #### Docker Configuration
-- [x] Improved Dockerfile (health checks, security)
-- [x] docker-compose.yml (networking, init SQL)
-- [x] Frontend Dockerfile + nginx.conf
-- [x] .env.example template
+- [x] Dockerfile with health checks
+- [x] docker-compose.yml with networking
+- [x] Frontend Dockerfile + nginx
 
 ---
 
-## Key Files Modified
+## New API Endpoints (Required in C# Backend)
 
-### Frontend
-- `/app/frontend/src/pages/Workspace.jsx` - Defensive checks, mobile responsive, CodeRunner
-- `/app/frontend/src/pages/Dashboard.jsx` - Defensive array handling
-- `/app/frontend/src/pages/auth/Login.jsx` - Improved error display
-- `/app/frontend/src/pages/auth/Register.jsx` - Improved error display
-- `/app/frontend/src/components/FriendsSidebar.jsx` - Defensive checks
-- `/app/frontend/src/hooks/useNotifications.js` - NEW: Real-time notifications
-- `/app/frontend/src/App.js` - Notification badge integration
+### Site Settings
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/site-settings` | GET | Get all site settings (admin) |
+| `/api/site-settings/public` | GET | Get public settings (announcement) |
+| `/api/site-settings` | PUT | Update site settings (admin) |
 
-### Docker
-- `/app/backend-csharp/Docker/Dockerfile` - Health checks, non-root user
-- `/app/backend-csharp/Docker/docker-compose.yml` - Full stack config
-- `/app/frontend/Dockerfile` - Production build
-- `/app/frontend/nginx.conf` - WebSocket proxy support
-- `/app/backend-csharp/Docker/.env.example` - Environment template
-
----
-
-## Deployment
-
-### Quick Start
-```bash
-cd /app/backend-csharp/Docker
-cp .env.example .env
-# Edit .env with your passwords and API keys
-docker-compose up -d
+### Site Settings Schema
+```json
+{
+  "announcement_enabled": true,
+  "announcement_message": "🚧 Early access - bugs expected!",
+  "announcement_type": "warning",
+  "maintenance_mode": false,
+  "admins_auto_friend": true
+}
 ```
 
-### Required Environment Variables
-- `DB_PASSWORD` - MySQL password
-- `JWT_SECRET` - JWT signing key (32+ chars)
-- `EMERGENT_LLM_KEY` - AI provider key
+---
+
+## Key Files Added/Modified
+
+### New Components
+- `/app/frontend/src/components/MiniShooterGame.jsx` - Downtime game
+
+### Modified Files
+- `/app/frontend/src/pages/auth/Login.jsx` - Game + announcement integration
+- `/app/frontend/src/pages/Admin.jsx` - Site Settings tab
+- `/app/frontend/src/lib/api.js` - siteSettingsAPI
 
 ---
 
@@ -95,7 +99,17 @@ docker-compose up -d
 
 ---
 
+## Deployment
+
+```bash
+cd /app/backend-csharp/Docker
+cp .env.example .env
+docker-compose up -d
+```
+
+---
+
 ## Next Steps (Requires C# Backend)
-1. Deploy C# backend with Docker
-2. E2E testing of full flow
-3. WebSocket collaboration testing
+1. Implement site-settings API endpoints in C#
+2. Implement auto-friend admins logic in user registration
+3. Full E2E testing once backend deployed
