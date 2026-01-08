@@ -229,11 +229,12 @@ public class CollaborationController : ControllerBase
 
     private static string GenerateShareToken()
     {
-        var bytes = new byte[24];
-        Random.Shared.NextBytes(bytes);
+        var bytes = new byte[32]; // 256 bits of randomness
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(bytes);
         return Convert.ToBase64String(bytes)
             .Replace("+", "-")
             .Replace("/", "_")
-            .Replace("=", "");
+            .TrimEnd('=');
     }
 }
