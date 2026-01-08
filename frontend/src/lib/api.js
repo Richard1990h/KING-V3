@@ -180,6 +180,11 @@ export const adminAPI = {
     }),
     // Subscription Plan Management
     getAllPlans: () => api.get('/plans/all'),
+    getSubscriptionPlans: () => api.get('/admin/subscription-plans'),
+    createSubscriptionPlan: (data) => api.post('/admin/subscription-plans', data),
+    updateSubscriptionPlan: (planId, data) => api.put(`/admin/subscription-plans/${planId}`, data),
+    deleteSubscriptionPlan: (planId) => api.delete(`/admin/subscription-plans/${planId}`),
+    // Legacy plan endpoints
     createPlan: (data) => api.post('/admin/plans', data),
     updatePlan: (planId, data) => api.put(`/admin/plans/${planId}`, data),
     deletePlan: (planId) => api.delete(`/admin/plans/${planId}`),
