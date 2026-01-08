@@ -441,7 +441,7 @@ export default function Workspace() {
                 timestamp: new Date().toISOString() 
             }]);
             
-            const planRes = await api.post(`/api/ai/plan`, {
+            const planRes = await api.post(`/ai/plan`, {
                 project_id: projectId,
                 request: `${userRequest}\n\nContext: ${fileContext}`,
                 agents: enabledAgents
