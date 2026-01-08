@@ -227,7 +227,27 @@ public class AdminController : ControllerBase
     public async Task<ActionResult> GetKnowledgeBase([FromQuery] int limit = 50)
     {
         var entries = await _aiService.GetKnowledgeBaseEntriesAsync(limit);
-        return Ok(entries);
+        
+        // Map to frontend-expected format
+        var response = entries.Select(e => new
+        {
+            id = e.Id,
+            question = e.Question,
+            question_text = e.Question, // Alias for frontend compatibility
+            answer = e.Answer,
+            answer_text = e.Answer, // Alias for frontend compatibility
+            provider = e.Provider,
+            hitCount = e.HitCount,
+            hit_count = e.HitCount, // Alias for frontend compatibility
+            usage_count = e.HitCount, // Another alias
+            isValid = e.IsValid,
+            is_valid = e.IsValid, // Alias for frontend compatibility
+            invalidated_at = e.InvalidatedAt?.ToString("o"),
+            created_at = e.CreatedAt.ToString("o"),
+            updated_at = e.UpdatedAt.ToString("o")
+        });
+        
+        return Ok(response);
     }
 
     [HttpPost("knowledge-base")]
