@@ -513,7 +513,6 @@ export default function GlobalAssistant() {
                         )}
                     </motion.div>
                 )}
-            </AnimatePresence>
         </>
     );
 }
