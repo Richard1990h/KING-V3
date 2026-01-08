@@ -1,8 +1,5 @@
 # LittleHelper AI - Product Requirements Document
 
-## Original Problem Statement
-Build a comprehensive AI-powered code generation platform with multi-agent capabilities, real-time collaboration, and social features.
-
 ## Architecture (LOCKED)
 - **Backend**: C# ASP.NET Core 8.0, MariaDB/MySQL
 - **Frontend**: React 18, Tailwind CSS, Shadcn UI
@@ -11,85 +8,116 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 
 ## Implementation Status (January 8, 2026)
 
-### ✅ Completed Features
+### ✅ C# Backend - Site Settings Implemented
 
-#### Core Features
-- [x] Multi-Agent Build System
-- [x] Global Assistant Chat
-- [x] Admin Panel (Plans, Credits, Users)
-- [x] CodeBlock Component
+#### New Files Created:
+1. **`/app/backend-csharp/LittleHelperAI.API/Controllers/SiteSettingsController.cs`**
+   - `GET /api/site-settings` - Get all settings (admin only)
+   - `GET /api/site-settings/public` - Get public settings (anonymous)
+   - `PUT /api/site-settings` - Update settings (admin only)
+   - `POST /api/site-settings/auto-friend-admins` - Trigger auto-friend
 
-#### Social & Collaboration
-- [x] Friends system
-- [x] Direct messaging
-- [x] WebSocket collaboration service
-- [x] FriendsSidebar component
+2. **Models added to `Models.cs`:**
+   - `SiteSettings` - Database model
+   - `SiteSettingsRequest` - Request DTO
+   - `PublicSiteSettings` - Public response DTO
 
-#### Admin Site Settings (NEW)
-- [x] **Announcement Banner** - Admin-configurable login page message
-- [x] **Auto-Friend Admins** - Toggle for automatic admin-user friendship
-- [x] **Maintenance Mode** - Lock out non-admin users
+3. **Database table added to SQL schema:**
+   - `site_settings` table with announcement, maintenance, auto-friend columns
 
-#### Wave Defense Game (NEW) 🎮
-Full tower-defense game when backend is unavailable:
-- **20 Waves** of enemies with scaling difficulty
-- **6 Enemy Types**: Runner, Grunt, Tank, Shooter, Exploder, Healer
-- **Boss Battles** every 5 waves
-- **Player Upgrades**: Damage, Health, Armor, Fire Rate
-- **Base Upgrades**: Walls, Auto-Turret, Repair Station
-- **5 Troop Types**: Soldier, Sniper, Heavy, Medic, Engineer
-- **Credits System** for purchasing upgrades
-- **High Score Tracking** (persisted to localStorage)
-- **Sound Effects** (toggleable)
+#### Updated Files:
+1. **`AuthService.cs`**
+   - Added `AutoFriendAdminsForNewUser()` - Auto-friends admins on new user registration
+   - Added maintenance mode check in `LoginAsync()` - Blocks non-admin logins during maintenance
 
 ---
 
-## New Components
-
-### `/app/frontend/src/components/WaveDefenseGame.jsx`
-Full wave-based defense game featuring:
-- Entity classes (Enemy, Troop, Projectile, Particle)
-- Wave generation with difficulty scaling
-- Shop system between waves
-- Victory/Game Over screens
-
-### `/app/frontend/src/pages/Admin.jsx` (Updated)
-New "Site Settings" tab with:
-- Announcement message editor
-- Type selector (info/warning/success/error)
-- Preview panel
-- Auto-friend admins toggle
-- Maintenance mode toggle
-
----
-
-## API Endpoints (Required in C# Backend)
+## API Endpoints Summary
 
 ### Site Settings
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/site-settings` | GET | Admin | Get all site settings |
+| `/api/site-settings/public` | GET | None | Get announcement for login page |
+| `/api/site-settings` | PUT | Admin | Update site settings |
+| `/api/site-settings/auto-friend-admins` | POST | Admin | Manually trigger auto-friend |
+
+### Request/Response Examples
+
+**GET /api/site-settings/public**
+```json
+{
+  "announcementEnabled": true,
+  "announcementMessage": "🚧 Early access - bugs expected!",
+  "announcementType": "warning",
+  "maintenanceMode": false
+}
 ```
-GET  /api/site-settings         - Admin: get all settings
-GET  /api/site-settings/public  - Public: get announcement
-PUT  /api/site-settings         - Admin: update settings
+
+**PUT /api/site-settings**
+```json
+{
+  "announcementEnabled": true,
+  "announcementMessage": "We're in development mode!",
+  "announcementType": "warning",
+  "maintenanceMode": false,
+  "adminsAutoFriend": true
+}
 ```
+
+---
+
+## Deployment Steps
+
+1. **Update Database:**
+   ```sql
+   CREATE TABLE IF NOT EXISTS site_settings (
+       id VARCHAR(36) PRIMARY KEY DEFAULT 'default',
+       announcement_enabled TINYINT(1) DEFAULT 0,
+       announcement_message TEXT,
+       announcement_type VARCHAR(20) DEFAULT 'info',
+       maintenance_mode TINYINT(1) DEFAULT 0,
+       admins_auto_friend TINYINT(1) DEFAULT 1,
+       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+       updated_by VARCHAR(36)
+   );
+   
+   INSERT INTO site_settings (id) VALUES ('default') ON DUPLICATE KEY UPDATE id = id;
+   ```
+
+2. **Build & Deploy:**
+   ```bash
+   cd /app/backend-csharp/Docker
+   cp .env.example .env
+   # Edit .env with passwords
+   docker-compose up -d --build
+   ```
+
+3. **Set Announcement (via Admin Panel):**
+   - Login as admin
+   - Go to Admin → Site Settings
+   - Enable announcement, type message, select type
+   - Save
+
+---
+
+## Features Implemented
+
+### Frontend
+- [x] Wave Defense Game (when backend down)
+- [x] Admin Site Settings panel
+- [x] Announcement banner on login page
+- [x] Friends sidebar with notifications
+- [x] Mobile responsive workspace
+
+### Backend (C#)
+- [x] Site Settings API endpoints
+- [x] Auto-friend admins on user registration
+- [x] Maintenance mode blocking
+- [x] Database schema for site_settings
 
 ---
 
 ## Test Credentials
 - **User**: test@example.com / test123
 - **Admin**: admin@littlehelper.ai / admin123
-
----
-
-## Deployment
-```bash
-cd /app/backend-csharp/Docker
-cp .env.example .env
-docker-compose up -d
-```
-
----
-
-## Next Steps
-1. Implement site-settings C# endpoints
-2. Deploy C# backend
-3. E2E testing
