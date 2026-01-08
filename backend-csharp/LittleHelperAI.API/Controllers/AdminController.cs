@@ -484,6 +484,54 @@ public class AdminController : ControllerBase
             return NotFound(new { detail = "Plan not found" });
         return Ok(new { message = "Plan deleted" });
     }
+
+    // ==================== GOOGLE DRIVE CONFIG ====================
+
+    [HttpGet("google-drive-config")]
+    public async Task<ActionResult> GetGoogleDriveConfig()
+    {
+        var config = await _db.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT * FROM google_drive_config WHERE id = 'default'");
+
+        if (config == null)
+            return Ok(new { 
+                is_configured = false,
+                client_id = "",
+                redirect_uri = ""
+            });
+
+        return Ok(new {
+            is_configured = config.is_configured,
+            client_id = config.client_id ?? "",
+            redirect_uri = config.redirect_uri ?? "",
+            updated_at = config.updated_at
+        });
+    }
+
+    [HttpPut("google-drive-config")]
+    public async Task<ActionResult> UpdateGoogleDriveConfig([FromBody] GoogleDriveConfigRequest request)
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+
+        await _db.ExecuteAsync(@"
+            UPDATE google_drive_config 
+            SET client_id = @ClientId, 
+                client_secret = @ClientSecret, 
+                redirect_uri = @RedirectUri,
+                is_configured = @IsConfigured,
+                updated_at = NOW(),
+                updated_by = @UpdatedBy
+            WHERE id = 'default'",
+            new {
+                ClientId = request.ClientId,
+                ClientSecret = request.ClientSecret,
+                RedirectUri = request.RedirectUri,
+                IsConfigured = !string.IsNullOrEmpty(request.ClientId) && !string.IsNullOrEmpty(request.ClientSecret),
+                UpdatedBy = userId
+            });
+
+        return Ok(new { message = "Google Drive configuration updated" });
+    }
 }
 
 // Request/Response Models
