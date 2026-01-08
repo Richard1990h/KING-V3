@@ -91,8 +91,99 @@ public class AdminController : ControllerBase
     [HttpGet("system-health")]
     public async Task<ActionResult> GetSystemHealth()
     {
-        var health = await _aiService.CheckHealthAsync();
-        return Ok(health);
+        // Get system information
+        var process = System.Diagnostics.Process.GetCurrentProcess();
+        var computerInfo = new Dictionary<string, object>();
+        
+        // Memory info
+        var memoryUsed = process.WorkingSet64 / (1024.0 * 1024.0); // MB
+        var gcMemory = GC.GetTotalMemory(false) / (1024.0 * 1024.0); // MB
+        
+        // CPU info
+        var processorCount = Environment.ProcessorCount;
+        
+        // Disk info  
+        var drives = new List<object>();
+        try 
+        {
+            foreach (var drive in System.IO.DriveInfo.GetDrives())
+            {
+                if (drive.IsReady)
+                {
+                    drives.Add(new 
+                    {
+                        name = drive.Name,
+                        type = drive.DriveType.ToString(),
+                        totalSize = $"{drive.TotalSize / (1024.0 * 1024.0 * 1024.0):F2} GB",
+                        freeSpace = $"{drive.TotalFreeSpace / (1024.0 * 1024.0 * 1024.0):F2} GB",
+                        usedSpace = $"{(drive.TotalSize - drive.TotalFreeSpace) / (1024.0 * 1024.0 * 1024.0):F2} GB",
+                        percentUsed = ((drive.TotalSize - drive.TotalFreeSpace) * 100.0 / drive.TotalSize).ToString("F1") + "%",
+                        format = drive.DriveFormat
+                    });
+                }
+            }
+        }
+        catch { /* Ignore drive errors */ }
+
+        // Database health
+        var dbHealth = "Unknown";
+        try
+        {
+            var count = await _creditService.GetSettingsAsync();
+            dbHealth = "Connected";
+        }
+        catch
+        {
+            dbHealth = "Disconnected";
+        }
+
+        // AI providers status
+        var aiHealth = await _aiService.CheckHealthAsync();
+
+        return Ok(new
+        {
+            system = new
+            {
+                status = "healthy",
+                os = Environment.OSVersion.ToString(),
+                machineName = Environment.MachineName,
+                userName = Environment.UserName,
+                is64Bit = Environment.Is64BitOperatingSystem,
+                dotnetVersion = Environment.Version.ToString(),
+                processors = processorCount
+            },
+            memory = new
+            {
+                status = "healthy",
+                processMemory = $"{memoryUsed:F2} MB",
+                gcMemory = $"{gcMemory:F2} MB",
+                gcCollections = new {
+                    gen0 = GC.CollectionCount(0),
+                    gen1 = GC.CollectionCount(1),
+                    gen2 = GC.CollectionCount(2)
+                }
+            },
+            storage = new
+            {
+                status = "healthy",
+                drives = drives
+            },
+            database = new
+            {
+                status = dbHealth == "Connected" ? "healthy" : "error",
+                connection = dbHealth,
+                type = "MySQL/MariaDB"
+            },
+            api = new
+            {
+                status = "healthy",
+                uptime = (DateTime.UtcNow - process.StartTime.ToUniversalTime()).ToString(@"dd\.hh\:mm\:ss"),
+                startTime = process.StartTime.ToUniversalTime().ToString("o"),
+                port = 8001
+            },
+            ai_services = aiHealth,
+            timestamp = DateTime.UtcNow
+        });
     }
 
     // ==================== SETTINGS ====================
