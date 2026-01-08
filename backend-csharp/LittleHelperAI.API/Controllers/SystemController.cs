@@ -271,26 +271,133 @@ Rules:
         }
     }
 
-    // AI Execute Task endpoint - executes a single task from the plan
+    // AI Execute Task endpoint - executes a single task from the plan and creates files
     [HttpPost("ai/execute-task")]
     [Authorize]
     public async Task<ActionResult> ExecuteTask([FromBody] ExecuteTaskRequest request)
     {
         try
         {
-            var systemPrompt = $@"You are a {request.Agent ?? "developer"} AI agent. 
-Execute the following task and provide the code or content needed.
-Be practical and provide working code. Use proper formatting.";
+            // Support both 'task' and 'taskDescription' field names
+            var taskDescription = request.Task ?? request.TaskDescription ?? "";
+            var taskTitle = request.TaskTitle ?? taskDescription.Substring(0, Math.Min(50, taskDescription.Length));
+            var projectId = request.ProjectId;
+            
+            var systemPrompt = $@"You are a {request.Agent ?? "developer"} AI agent.
+Your job is to generate working code for the given task.
 
-            var userPrompt = $"Task: {request.TaskTitle}\nDescription: {request.TaskDescription}\n\nContext:\n{request.Context ?? "No additional context"}";
+IMPORTANT: You MUST return a JSON response with this exact structure:
+{{
+    ""files"": [
+        {{
+            ""path"": ""filename.py"",
+            ""content"": ""# actual code here...""
+        }}
+    ],
+    ""message"": ""Brief description of what was created""
+}}
+
+Rules:
+1. Extract the filename from the task description, or generate an appropriate one
+2. Generate complete, working code - not placeholders
+3. Return ONLY the JSON, no markdown code blocks
+4. Use proper indentation in the code content (use \\n for newlines, \\t for tabs)
+5. If creating a Python file, include proper imports and a main block if needed
+6. If creating a web file (HTML/CSS/JS), make it complete and functional";
+
+            var userPrompt = $"Task: {taskTitle}\nDescription: {taskDescription}\n\nGenerate the code and return as JSON with files array.";
             
             var response = await _aiService.GenerateAsync(userPrompt, systemPrompt, 4000);
             
+            var content = response.Content ?? "{}";
+            
+            // Remove markdown code blocks if present
+            if (content.Contains("```json"))
+            {
+                var start = content.IndexOf("```json") + 7;
+                var end = content.LastIndexOf("```");
+                if (end > start) content = content.Substring(start, end - start);
+            }
+            else if (content.Contains("```"))
+            {
+                var start = content.IndexOf("```") + 3;
+                var end = content.LastIndexOf("```");
+                if (end > start) content = content.Substring(start, end - start);
+            }
+            content = content.Trim();
+            
+            var createdFiles = new List<object>();
+            string message = "Task completed";
+            
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(content);
+                
+                if (json.TryGetProperty("files", out var filesArray) && filesArray.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var fileObj in filesArray.EnumerateArray())
+                    {
+                        var path = fileObj.GetProperty("path").GetString() ?? "untitled.txt";
+                        var fileContent = fileObj.GetProperty("content").GetString() ?? "";
+                        
+                        // Unescape the content (convert \n to actual newlines, etc.)
+                        fileContent = System.Text.RegularExpressions.Regex.Unescape(fileContent);
+                        
+                        createdFiles.Add(new { path, content = fileContent });
+                    }
+                }
+                
+                if (json.TryGetProperty("message", out var msgProp))
+                {
+                    message = msgProp.GetString() ?? message;
+                }
+            }
+            catch
+            {
+                // If JSON parsing fails, try to extract code blocks and create a file
+                var codeMatch = System.Text.RegularExpressions.Regex.Match(content, @"```(\w+)?\s*([\s\S]*?)```");
+                if (codeMatch.Success)
+                {
+                    var lang = codeMatch.Groups[1].Value;
+                    var code = codeMatch.Groups[2].Value.Trim();
+                    var extension = lang switch
+                    {
+                        "python" or "py" => ".py",
+                        "javascript" or "js" => ".js",
+                        "typescript" or "ts" => ".ts",
+                        "html" => ".html",
+                        "css" => ".css",
+                        "json" => ".json",
+                        "java" => ".java",
+                        "csharp" or "cs" => ".cs",
+                        _ => ".txt"
+                    };
+                    
+                    // Try to extract filename from task
+                    var fileNameMatch = System.Text.RegularExpressions.Regex.Match(taskDescription, @"(\w+\.\w+)");
+                    var path = fileNameMatch.Success ? fileNameMatch.Groups[1].Value : $"generated{extension}";
+                    
+                    createdFiles.Add(new { path, content = code });
+                    message = $"Generated {path}";
+                }
+                else
+                {
+                    // Just use the raw content as code
+                    var path = "generated.txt";
+                    var fileNameMatch = System.Text.RegularExpressions.Regex.Match(taskDescription, @"(\w+\.\w+)");
+                    if (fileNameMatch.Success) path = fileNameMatch.Groups[1].Value;
+                    
+                    createdFiles.Add(new { path, content = content });
+                    message = $"Generated {path}";
+                }
+            }
+            
             return Ok(new
             {
-                taskId = request.TaskId,
+                taskId = request.TaskId ?? Guid.NewGuid().ToString(),
                 status = "completed",
-                output = response.Content,
+                files = createdFiles,
+                output = message,
                 agent = request.Agent,
                 tokensUsed = response.Tokens,
                 creditsUsed = (response.Tokens / 1000.0) * 0.5
@@ -300,9 +407,10 @@ Be practical and provide working code. Use proper formatting.";
         {
             return Ok(new
             {
-                taskId = request.TaskId,
+                taskId = request.TaskId ?? Guid.NewGuid().ToString(),
                 status = "failed",
                 error = ex.Message,
+                files = Array.Empty<object>(),
                 agent = request.Agent
             });
         }
