@@ -1,8 +1,9 @@
-// AI Service Implementation
+// AI Service Implementation - Updated with actual free provider integrations
 using LittleHelperAI.Data;
 using LittleHelperAI.Data.Models;
 using LittleHelperAI.Agents;
 using System.Text.Json;
+using System.Net.Http.Headers;
 
 namespace LittleHelperAI.API.Services;
 
@@ -18,7 +19,7 @@ public class AIService : IAIService, Agents.IAIService
         _db = db;
         _config = config;
         _logger = logger;
-        _httpClient = new HttpClient();
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
     }
 
     public async Task<object> CheckHealthAsync()
@@ -38,6 +39,11 @@ public class AIService : IAIService, Agents.IAIService
                 configured = !string.IsNullOrEmpty(_config["EmergentLLM:Key"])
             },
             free_providers = enabledProviders.Select(p => new { p.Name, p.Provider, p.IsEnabled }),
+            local_llm = new
+            {
+                url = _config["LocalLLM:Url"] ?? "http://localhost:11434",
+                model = _config["LocalLLM:Model"] ?? "qwen2.5-coder:1.5b"
+            },
             timestamp = DateTime.UtcNow
         };
     }
@@ -45,11 +51,17 @@ public class AIService : IAIService, Agents.IAIService
     // Implementation of Agents.IAIService.CheckHealthAsync
     async Task<HealthStatus> Agents.IAIService.CheckHealthAsync()
     {
+        var providers = await GetFreeAIProvidersAsync();
+        var availableModels = providers
+            .Where(p => p.IsEnabled && !string.IsNullOrEmpty(p.Model))
+            .Select(p => $"{p.Provider}:{p.Model}")
+            .ToList();
+
         return new HealthStatus(
             "connected",
             "available",
             "configured",
-            new List<string> { "gpt-4", "claude-3", "local-llm" }
+            availableModels
         );
     }
 
@@ -170,7 +182,7 @@ public class AIService : IAIService, Agents.IAIService
             }
         }
 
-        // Try free providers
+        // Try free providers in order of priority
         var providers = await GetFreeAIProvidersAsync();
         foreach (var provider in providers.Where(p => p.IsEnabled).OrderBy(p => p.Priority))
         {
@@ -184,7 +196,17 @@ public class AIService : IAIService, Agents.IAIService
             }
         }
 
-        throw new InvalidOperationException("No AI providers available");
+        // Try local Ollama as fallback
+        try
+        {
+            return await CallOllamaAsync(prompt, systemPrompt, maxTokens);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Local Ollama failed");
+        }
+
+        throw new InvalidOperationException("No AI providers available. Please configure at least one provider in the admin panel.");
     }
 
     public async IAsyncEnumerable<string> GenerateStreamingAsync(string prompt, string? systemPrompt = null)
@@ -196,19 +218,230 @@ public class AIService : IAIService, Agents.IAIService
 
     private async Task<AIResponse> CallEmergentLLMAsync(string prompt, string? systemPrompt, string apiKey, int maxTokens)
     {
-        // Implementation would call the Emergent LLM API
-        // For now, return a placeholder
-        await Task.CompletedTask;
-        var content = $"Response to: {prompt.Substring(0, Math.Min(50, prompt.Length))}...";
-        return new AIResponse(content, "emergent", "emergent-default", maxTokens / 2);
+        // Emergent LLM uses OpenAI-compatible API
+        var requestBody = new
+        {
+            model = "gpt-4o-mini",
+            messages = BuildMessages(prompt, systemPrompt),
+            max_tokens = maxTokens,
+            temperature = 0.7
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<JsonElement>(json);
+        
+        var content = result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
+        var tokens = result.GetProperty("usage").GetProperty("total_tokens").GetInt32();
+        
+        return new AIResponse(content, "emergent", "gpt-4o-mini", tokens);
     }
 
     private async Task<AIResponse> CallFreeProviderAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
     {
-        // Implementation would call the respective free provider's API
-        await Task.CompletedTask;
-        var content = $"Response from {provider.Name}: {prompt.Substring(0, Math.Min(50, prompt.Length))}...";
-        return new AIResponse(content, provider.Provider, provider.Model ?? provider.Provider, maxTokens / 2);
+        return provider.Provider.ToLower() switch
+        {
+            "groq" => await CallGroqAsync(prompt, systemPrompt, provider, maxTokens),
+            "together" => await CallTogetherAsync(prompt, systemPrompt, provider, maxTokens),
+            "huggingface" => await CallHuggingFaceAsync(prompt, systemPrompt, provider, maxTokens),
+            "openrouter" => await CallOpenRouterAsync(prompt, systemPrompt, provider, maxTokens),
+            "ollama" => await CallOllamaAsync(prompt, systemPrompt, maxTokens),
+            _ => throw new NotSupportedException($"Provider {provider.Provider} is not supported")
+        };
+    }
+
+    private async Task<AIResponse> CallGroqAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    {
+        if (string.IsNullOrEmpty(provider.ApiKey))
+            throw new InvalidOperationException("Groq API key not configured");
+
+        var requestBody = new
+        {
+            model = provider.Model ?? "llama-3.1-70b-versatile",
+            messages = BuildMessages(prompt, systemPrompt),
+            max_tokens = maxTokens,
+            temperature = 0.7
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<JsonElement>(json);
+        
+        var content = result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
+        var tokens = result.TryGetProperty("usage", out var usage) 
+            ? usage.GetProperty("total_tokens").GetInt32() 
+            : maxTokens / 2;
+        
+        return new AIResponse(content, "groq", provider.Model ?? "llama-3.1-70b-versatile", tokens);
+    }
+
+    private async Task<AIResponse> CallTogetherAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    {
+        if (string.IsNullOrEmpty(provider.ApiKey))
+            throw new InvalidOperationException("Together AI API key not configured");
+
+        var requestBody = new
+        {
+            model = provider.Model ?? "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+            messages = BuildMessages(prompt, systemPrompt),
+            max_tokens = maxTokens,
+            temperature = 0.7
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.together.xyz/v1/chat/completions")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<JsonElement>(json);
+        
+        var content = result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
+        var tokens = result.TryGetProperty("usage", out var usage) 
+            ? usage.GetProperty("total_tokens").GetInt32() 
+            : maxTokens / 2;
+        
+        return new AIResponse(content, "together", provider.Model ?? "llama-3.2", tokens);
+    }
+
+    private async Task<AIResponse> CallOpenRouterAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    {
+        if (string.IsNullOrEmpty(provider.ApiKey))
+            throw new InvalidOperationException("OpenRouter API key not configured");
+
+        var requestBody = new
+        {
+            model = provider.Model ?? "google/gemma-2-9b-it:free",
+            messages = BuildMessages(prompt, systemPrompt),
+            max_tokens = maxTokens,
+            temperature = 0.7
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://openrouter.ai/api/v1/chat/completions")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
+        request.Headers.Add("HTTP-Referer", "https://littlehelper.ai");
+        request.Headers.Add("X-Title", "LittleHelper AI");
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<JsonElement>(json);
+        
+        var content = result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
+        var tokens = result.TryGetProperty("usage", out var usage) 
+            ? usage.GetProperty("total_tokens").GetInt32() 
+            : maxTokens / 2;
+        
+        return new AIResponse(content, "openrouter", provider.Model ?? "gemma-2-9b-it", tokens);
+    }
+
+    private async Task<AIResponse> CallHuggingFaceAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
+    {
+        if (string.IsNullOrEmpty(provider.ApiKey))
+            throw new InvalidOperationException("HuggingFace API key not configured");
+
+        var model = provider.Model ?? "microsoft/DialoGPT-large";
+        var fullPrompt = string.IsNullOrEmpty(systemPrompt) ? prompt : $"{systemPrompt}\n\n{prompt}";
+        
+        var requestBody = new
+        {
+            inputs = fullPrompt,
+            parameters = new { max_new_tokens = maxTokens, temperature = 0.7 }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"https://api-inference.huggingface.co/models/{model}")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<JsonElement>(json);
+        
+        string content;
+        if (result.ValueKind == JsonValueKind.Array)
+        {
+            content = result[0].TryGetProperty("generated_text", out var text) 
+                ? text.GetString() ?? ""
+                : result[0].GetString() ?? "";
+        }
+        else
+        {
+            content = result.GetProperty("generated_text").GetString() ?? "";
+        }
+        
+        return new AIResponse(content, "huggingface", model, maxTokens / 2);
+    }
+
+    private async Task<AIResponse> CallOllamaAsync(string prompt, string? systemPrompt, int maxTokens)
+    {
+        var ollamaUrl = _config["LocalLLM:Url"] ?? "http://localhost:11434";
+        var model = _config["LocalLLM:Model"] ?? "qwen2.5-coder:1.5b";
+
+        var requestBody = new
+        {
+            model,
+            messages = BuildMessages(prompt, systemPrompt),
+            stream = false,
+            options = new { num_predict = maxTokens }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{ollamaUrl}/api/chat")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
+        };
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<JsonElement>(json);
+        
+        var content = result.GetProperty("message").GetProperty("content").GetString() ?? "";
+        var tokens = result.TryGetProperty("eval_count", out var count) ? count.GetInt32() : maxTokens / 2;
+        
+        return new AIResponse(content, "ollama", model, tokens);
+    }
+
+    private static object[] BuildMessages(string prompt, string? systemPrompt)
+    {
+        var messages = new List<object>();
+        
+        if (!string.IsNullOrEmpty(systemPrompt))
+        {
+            messages.Add(new { role = "system", content = systemPrompt });
+        }
+        
+        messages.Add(new { role = "user", content = prompt });
+        
+        return messages.ToArray();
     }
 
     private static string ComputeHash(string input)
