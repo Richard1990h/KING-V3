@@ -142,6 +142,30 @@ public class UserController : ControllerBase
         await _authService.DeleteUserAIProviderAsync(userId, provider);
         return Ok(new { message = "API key deleted" });
     }
+
+    // ==================== GOOGLE DRIVE ====================
+    
+    [HttpGet("google-drive")]
+    public async Task<ActionResult> GetGoogleDriveConfig()
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var config = await _authService.GetUserGoogleDriveConfigAsync(userId);
+        return Ok(config ?? new { is_connected = false });
+    }
+
+    [HttpPut("google-drive")]
+    public async Task<ActionResult> SaveGoogleDriveConfig([FromBody] GoogleDriveConfigRequest request)
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        await _authService.SaveUserGoogleDriveConfigAsync(userId, request.IsConnected, request.Email, request.AccessToken, request.RefreshToken);
+        return Ok(new { message = "Google Drive configuration saved" });
+    }
 }
 
 // Request models
