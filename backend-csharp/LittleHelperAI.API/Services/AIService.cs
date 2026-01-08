@@ -225,30 +225,39 @@ public class AIService : IAIService, AgentIAIService
 
     private async Task<AgentAIResponse> CallEmergentLLMAsync(string prompt, string? systemPrompt, string apiKey, int maxTokens)
     {
+        _logger.LogInformation("Calling Emergent/OpenAI LLM with key: {KeyPrefix}...", apiKey.Substring(0, Math.Min(20, apiKey.Length)));
+        
         var requestBody = new
         {
-            model = "gpt-4o-mini",
+            model = _config["EmergentLLM:Model"] ?? "gpt-4o-mini",
             messages = BuildMessages(prompt, systemPrompt),
             max_tokens = maxTokens,
             temperature = 0.7
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
+        var baseUrl = _config["EmergentLLM:BaseUrl"] ?? "https://api.openai.com/v1";
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/chat/completions")
         {
             Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        var responseContent = await response.Content.ReadAsStringAsync();
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Emergent LLM call failed: {StatusCode} - {Response}", response.StatusCode, responseContent);
+            throw new HttpRequestException($"API call failed: {response.StatusCode}");
+        }
 
-        var json = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<JsonElement>(json);
+        var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
         
         var content = result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
-        var tokens = result.GetProperty("usage").GetProperty("total_tokens").GetInt32();
+        var tokens = 0;
+        try { tokens = result.GetProperty("usage").GetProperty("total_tokens").GetInt32(); } catch { }
         
-        return new AgentAIResponse(content, "emergent", "gpt-4o-mini", tokens);
+        return new AgentAIResponse(content, "emergent", _config["EmergentLLM:Model"] ?? "gpt-4o-mini", tokens);
     }
 
     private async Task<AgentAIResponse> CallFreeProviderAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
