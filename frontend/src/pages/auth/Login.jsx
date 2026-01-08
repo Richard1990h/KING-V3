@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { ScrollArea } from '../../components/ui/scroll-area';
-import { MiniShooterGame } from '../../components/MiniShooterGame';
+import { WaveDefenseGame } from '../../components/WaveDefenseGame';
 import { siteSettingsAPI } from '../../lib/api';
 import { 
     Eye, EyeOff, Zap, ArrowLeft, Check, X, 
