@@ -295,9 +295,11 @@ export default function Workspace() {
     const loadFiles = async () => {
         try {
             const res = await filesAPI.getAll(projectId);
-            setFiles(res.data);
+            // Defensive: ensure files is always an array
+            setFiles(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Failed to load files:', error);
+            setFiles([]);
         }
     };
 
@@ -610,9 +612,10 @@ export default function Workspace() {
             }
             
             const res = await projectsAPI.build(projectId);
-            setOutput(res.data.logs);
+            // Defensive: ensure logs is always an array
+            setOutput(Array.isArray(res.data?.logs) ? res.data.logs : [{ level: 'info', message: 'Build completed', timestamp: new Date().toISOString() }]);
         } catch (error) {
-            setOutput([...output, { level: 'error', message: `Build failed: ${error.message}`, timestamp: new Date().toISOString() }]);
+            setOutput(prev => [...(Array.isArray(prev) ? prev : []), { level: 'error', message: `Build failed: ${error.response?.data?.detail || error.message}`, timestamp: new Date().toISOString() }]);
         } finally {
             setBuilding(false);
         }
@@ -630,9 +633,10 @@ export default function Workspace() {
             }
             
             const res = await projectsAPI.run(projectId);
-            setOutput(res.data.logs);
+            // Defensive: ensure logs is always an array
+            setOutput(Array.isArray(res.data?.logs) ? res.data.logs : [{ level: 'info', message: 'Run completed', timestamp: new Date().toISOString() }]);
         } catch (error) {
-            setOutput([...output, { level: 'error', message: `Run failed: ${error.message}`, timestamp: new Date().toISOString() }]);
+            setOutput(prev => [...(Array.isArray(prev) ? prev : []), { level: 'error', message: `Run failed: ${error.response?.data?.detail || error.message}`, timestamp: new Date().toISOString() }]);
         } finally {
             setRunning(false);
         }
