@@ -207,7 +207,44 @@ export const adminAPI = {
         }),
     // AI Settings
     getAISettings: () => api.get('/admin/ai-settings'),
-    toggleEmergentLLM: (enabled) => api.put(`/admin/ai-settings/emergent-toggle?enabled=${enabled}`)
+    toggleEmergentLLM: (enabled) => api.put(`/admin/ai-settings/emergent-toggle?enabled=${enabled}`),
+    // Google Drive Config
+    getGoogleDriveConfig: () => api.get('/admin/google-drive-config'),
+    updateGoogleDriveConfig: (data) => api.put('/admin/google-drive-config', data)
+};
+
+// Friends API
+export const friendsAPI = {
+    getFriends: () => api.get('/friends'),
+    sendRequest: (email) => api.post('/friends/request', { email }),
+    getRequests: () => api.get('/friends/requests'),
+    respondToRequest: (requestId, action) => api.put(`/friends/requests/${requestId}`, { action }),
+    removeFriend: (friendUserId) => api.delete(`/friends/${friendUserId}`),
+    // Direct Messages
+    getMessages: (friendUserId, limit = 50) => api.get(`/friends/dm/${friendUserId}?limit=${limit}`),
+    sendMessage: (friendUserId, message) => api.post(`/friends/dm/${friendUserId}`, { message }),
+    getUnreadCount: () => api.get('/friends/dm/unread')
+};
+
+// Collaborators API
+export const collaboratorsAPI = {
+    getCollaborators: (projectId) => api.get(`/projects/${projectId}/collaborators`),
+    addCollaborator: (projectId, userId, permission = 'edit') => 
+        api.post(`/projects/${projectId}/collaborators`, { userId, permission }),
+    updateCollaborator: (projectId, userId, permission) => 
+        api.put(`/projects/${projectId}/collaborators/${userId}`, { permission }),
+    removeCollaborator: (projectId, userId) => 
+        api.delete(`/projects/${projectId}/collaborators/${userId}`),
+    setCreditMode: (projectId, mode) => 
+        api.put(`/projects/${projectId}/collaborators/credit-mode`, { mode })
+};
+
+// Collaboration API (sharing & real-time)
+export const collaborationAPI = {
+    createShareLink: (projectId) => api.post(`/collaboration/${projectId}/share`),
+    validateShareLink: (shareToken) => api.get(`/collaboration/share/validate/${shareToken}`),
+    downloadProject: (projectId) => api.get(`/collaboration/${projectId}/download`, { responseType: 'blob' }),
+    exportToDrive: (projectId) => api.post(`/collaboration/${projectId}/export/drive`)
 };
 
 // Subscription/Plans API
