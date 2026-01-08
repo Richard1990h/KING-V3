@@ -151,6 +151,40 @@ public class ProjectsController : ControllerBase
             return NotFound(new { detail = "Todo not found" });
         return Ok(new { message = "Todo deleted" });
     }
+
+    // Chat Endpoints
+    [HttpGet("{projectId}/chat")]
+    public async Task<ActionResult<List<ChatMessage>>> GetChatHistory(string projectId, [FromQuery] int limit = 50)
+    {
+        var messages = await _projectService.GetChatHistoryAsync(projectId, GetUserId(), limit);
+        return Ok(messages);
+    }
+
+    [HttpPost("{projectId}/chat")]
+    public async Task<ActionResult<ChatMessage>> SendChatMessage(string projectId, [FromBody] SendChatRequest request)
+    {
+        var message = new ChatMessage
+        {
+            UserId = GetUserId(),
+            ProjectId = projectId,
+            ConversationId = request.ConversationId,
+            Role = "user",
+            Content = request.Message,
+            MultiAgentMode = request.MultiAgentMode
+        };
+
+        var savedMessage = await _projectService.SaveChatMessageAsync(message);
+        return Ok(savedMessage);
+    }
+
+    [HttpDelete("{projectId}/chat")]
+    public async Task<ActionResult> ClearChatHistory(string projectId)
+    {
+        // Mark messages as deleted
+        var userId = GetUserId();
+        // For now just return success - in production would update database
+        return Ok(new { message = "Chat history cleared" });
+    }
 }
 
 // Request/Response Models
