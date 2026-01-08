@@ -557,111 +557,211 @@ export default function Admin() {
                         </motion.div>
                     </TabsContent>
 
-                    {/* Plans Tab */}
+                    {/* Plans Tab - Split into Subscription Plans and Credit Packages */}
                     <TabsContent value="plans">
-                        <div className="glass-card rounded-xl overflow-hidden">
-                            <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                                <h2 className="text-xl font-semibold">Subscription Plans ({plans.length})</h2>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={distributeDailyCredits} className="border-white/10">
-                                        <Zap size={16} className="mr-2" />
-                                        Distribute Daily Credits
-                                    </Button>
-                                    <Button size="sm" onClick={() => openPlanDialog()} className="bg-fuchsia-500 hover:bg-fuchsia-600">
-                                        <Plus size={16} className="mr-2" />
-                                        New Plan
-                                    </Button>
+                        <div className="space-y-6">
+                            {/* Monthly Subscription Plans Section */}
+                            <div className="glass-card rounded-xl overflow-hidden">
+                                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-xl font-semibold">Monthly Subscription Plans</h2>
+                                        <p className="text-sm text-gray-400 mt-1">Recurring subscription plans with daily credit allocation</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" size="sm" onClick={distributeDailyCredits} className="border-white/10">
+                                            <Zap size={16} className="mr-2" />
+                                            Distribute Daily Credits
+                                        </Button>
+                                        <Button size="sm" onClick={() => openPlanDialog()} className="bg-fuchsia-500 hover:bg-fuchsia-600">
+                                            <Plus size={16} className="mr-2" />
+                                            New Plan
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <ScrollArea className="h-[500px]">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="border-white/10">
-                                            <TableHead>Plan</TableHead>
-                                            <TableHead>Price/Month</TableHead>
-                                            <TableHead>Daily Credits</TableHead>
-                                            <TableHead>Workspaces</TableHead>
-                                            <TableHead>Projects</TableHead>
-                                            <TableHead>API Keys</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {plans.map((plan) => (
-                                            <TableRow key={plan.plan_id} className="border-white/10">
-                                                <TableCell>
-                                                    <div>
-                                                        <p className="font-medium">{plan.name}</p>
-                                                        <p className="text-xs text-gray-400">{plan.id}</p>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-1">
-                                                        <DollarSign size={14} className="text-green-400" />
-                                                        <span>${plan.priceMonthly?.toFixed(2) || '0.00'}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-1">
-                                                        <Zap size={14} className="text-fuchsia-400" />
-                                                        <span>{plan.dailyCredits || 0}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-1">
-                                                        <Layers size={14} className="text-cyan-400" />
-                                                        <span>{plan.maxConcurrentWorkspaces === -1 ? 'Unlimited' : (plan.maxConcurrentWorkspaces || 1)}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {plan.maxProjects === -1 ? 'Unlimited' : (plan.maxProjects || 'Unlimited')}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className={`px-2 py-1 rounded text-xs ${
-                                                        plan.allowsOwnApiKeys 
-                                                            ? 'bg-green-500/20 text-green-400' 
-                                                            : 'bg-gray-500/20 text-gray-400'
-                                                    }`}>
-                                                        {plan.allowsOwnApiKeys ? 'Allowed' : 'No'}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className={`px-2 py-1 rounded text-xs ${
-                                                        plan.is_active !== false 
-                                                            ? 'bg-green-500/20 text-green-400' 
-                                                            : 'bg-red-500/20 text-red-400'
-                                                    }`}>
-                                                        {plan.is_active !== false ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => openPlanDialog(plan)}
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </Button>
-                                                        {!['free', 'starter', 'pro', 'enterprise'].includes(plan.plan_id) && (
+                                
+                                <ScrollArea className="h-[350px]">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-white/10">
+                                                <TableHead>Plan</TableHead>
+                                                <TableHead>Price/Month</TableHead>
+                                                <TableHead>Daily Credits</TableHead>
+                                                <TableHead>Workspaces</TableHead>
+                                                <TableHead>API Keys</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {plans.map((plan) => (
+                                                <TableRow key={plan.plan_id || plan.id} className="border-white/10">
+                                                    <TableCell>
+                                                        <div>
+                                                            <p className="font-medium">{plan.name}</p>
+                                                            <p className="text-xs text-gray-400">{plan.plan_id || plan.id}</p>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-1">
+                                                            <DollarSign size={14} className="text-green-400" />
+                                                            <span>${(plan.priceMonthly || plan.price_monthly || 0).toFixed(2)}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-1">
+                                                            <Zap size={14} className="text-fuchsia-400" />
+                                                            <span>{plan.dailyCredits || plan.daily_credits || 0}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-1">
+                                                            <Layers size={14} className="text-cyan-400" />
+                                                            <span>{(plan.maxConcurrentWorkspaces || plan.max_concurrent_workspaces) === -1 ? 'Unlimited' : (plan.maxConcurrentWorkspaces || plan.max_concurrent_workspaces || 1)}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className={`px-2 py-1 rounded text-xs ${
+                                                            (plan.allowsOwnApiKeys || plan.allows_own_api_keys)
+                                                                ? 'bg-green-500/20 text-green-400' 
+                                                                : 'bg-gray-500/20 text-gray-400'
+                                                        }`}>
+                                                            {(plan.allowsOwnApiKeys || plan.allows_own_api_keys) ? 'Allowed' : 'No'}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className={`px-2 py-1 rounded text-xs ${
+                                                            plan.is_active !== false 
+                                                                ? 'bg-green-500/20 text-green-400' 
+                                                                : 'bg-red-500/20 text-red-400'
+                                                        }`}>
+                                                            {plan.is_active !== false ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                onClick={() => deletePlan(plan.plan_id)}
-                                                                className="text-red-400 hover:text-red-300"
+                                                                onClick={() => openPlanDialog(plan)}
                                                             >
-                                                                <Trash2 size={16} />
+                                                                <Edit2 size={16} />
                                                             </Button>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
+                                                            {!['free', 'starter', 'pro', 'enterprise'].includes(plan.plan_id || plan.id) && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => deletePlan(plan.plan_id || plan.id)}
+                                                                    className="text-red-400 hover:text-red-300"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </ScrollArea>
+                            </div>
+
+                            {/* Credit Add-on Packages Section */}
+                            <div className="glass-card rounded-xl overflow-hidden">
+                                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-xl font-semibold">Credit Add-on Packages</h2>
+                                        <p className="text-sm text-gray-400 mt-1">One-time credit purchases for users</p>
+                                    </div>
+                                    <Button size="sm" onClick={() => openPackageDialog()} className="bg-cyan-500 hover:bg-cyan-600">
+                                        <Plus size={16} className="mr-2" />
+                                        New Package
+                                    </Button>
+                                </div>
+                                
+                                <ScrollArea className="h-[300px]">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-white/10">
+                                                <TableHead>Package Name</TableHead>
+                                                <TableHead>Credits</TableHead>
+                                                <TableHead>Price</TableHead>
+                                                <TableHead>Price/Credit</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </ScrollArea>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {creditPackages.length === 0 ? (
+                                                <TableRow className="border-white/10">
+                                                    <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                                                        <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                                        <p>No credit packages yet</p>
+                                                        <p className="text-xs mt-1">Click "New Package" to create one</p>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                creditPackages.map((pkg) => (
+                                                    <TableRow key={pkg.id} className="border-white/10">
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                                                                    <Package size={14} className="text-cyan-400" />
+                                                                </div>
+                                                                <span className="font-medium">{pkg.name}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-1">
+                                                                <Zap size={14} className="text-fuchsia-400" />
+                                                                <span className="font-medium">{formatCredits(pkg.credits)}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-1">
+                                                                <DollarSign size={14} className="text-green-400" />
+                                                                <span>${(pkg.price || 0).toFixed(2)}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <span className="text-gray-400">
+                                                                ${pkg.credits > 0 ? (pkg.price / pkg.credits).toFixed(4) : '0.00'}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <span className={`px-2 py-1 rounded text-xs ${
+                                                                pkg.is_active !== false 
+                                                                    ? 'bg-green-500/20 text-green-400' 
+                                                                    : 'bg-red-500/20 text-red-400'
+                                                            }`}>
+                                                                {pkg.is_active !== false ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => openPackageDialog(pkg)}
+                                                                >
+                                                                    <Edit2 size={16} />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => deletePackage(pkg.id)}
+                                                                    className="text-red-400 hover:text-red-300"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </Button>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </ScrollArea>
+                            </div>
                         </div>
                     </TabsContent>
 
