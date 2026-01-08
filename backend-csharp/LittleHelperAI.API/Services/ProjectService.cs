@@ -300,6 +300,23 @@ public class ProjectService : IProjectService
         return message;
     }
 
+    public async Task<int> ClearChatHistoryAsync(string projectId, string userId)
+    {
+        // Verify project ownership first
+        var project = await _db.QueryFirstOrDefaultAsync<Project>(
+            "SELECT id FROM projects WHERE id = @ProjectId AND user_id = @UserId",
+            new { ProjectId = projectId, UserId = userId });
+        
+        if (project == null) return 0;
+
+        // Delete all chat messages for this project
+        var deleted = await _db.ExecuteAsync(
+            "DELETE FROM chat_history WHERE project_id = @ProjectId AND user_id = @UserId",
+            new { ProjectId = projectId, UserId = userId });
+
+        return deleted;
+    }
+
     public async Task<ProjectRun> CreateRunAsync(string projectId, string runType)
     {
         var run = new ProjectRun
