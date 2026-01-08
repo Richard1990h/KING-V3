@@ -8,6 +8,9 @@ public interface IAIService
     // Health Check
     Task<object> CheckHealthAsync();
     
+    // Text Generation
+    Task<AgentAIResponse> GenerateAsync(string prompt, string? systemPrompt = null, int maxTokens = 4000);
+    
     // Free AI Providers
     Task<List<FreeAIProvider>> GetFreeAIProvidersAsync();
     Task UpdateFreeAIProviderAsync(string providerId, bool enabled, string? apiKey = null);
@@ -21,5 +24,8 @@ public interface IAIService
     // Agent Activity
     Task<List<AgentActivity>> GetAgentActivityAsync(int limit);
 }
+
+// Response record for AI generation
+public record AgentAIResponse(string Content, string Provider, string Model, int Tokens);
 
 public record AIHealthStatus(string Database, string LocalLlm, string Stripe, List<string>? AvailableModels);
