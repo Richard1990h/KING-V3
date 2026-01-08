@@ -21,6 +21,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { MessageContent } from '../components/CodeBlock';
 import { 
     Zap, ArrowLeft, Play, Hammer, Save, Download, Send, Plus, Trash2,
     File, FileCode, Folder, ChevronRight, ChevronDown, MoreVertical,
