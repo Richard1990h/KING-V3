@@ -58,6 +58,9 @@ const PublicRoute = ({ children }) => {
 // Layout with Global Assistant and Friends Sidebar
 const LayoutWithAssistant = ({ children }) => {
     const [friendsSidebarOpen, setFriendsSidebarOpen] = useState(false);
+    const { user } = useAuth();
+    const { unreadDMs, pendingRequests } = useNotifications(user?.id);
+    const totalNotifications = (unreadDMs || 0) + (pendingRequests || 0);
     
     return (
         <>
@@ -67,11 +70,12 @@ const LayoutWithAssistant = ({ children }) => {
                 isOpen={friendsSidebarOpen} 
                 onClose={() => setFriendsSidebarOpen(false)} 
             />
-            {/* Friends toggle button */}
+            {/* Friends toggle button with notification badge */}
             <button
                 onClick={() => setFriendsSidebarOpen(!friendsSidebarOpen)}
                 className="fixed left-4 bottom-4 w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform z-[50]"
                 title="Friends & Messages"
+                data-testid="friends-toggle-btn"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -79,6 +83,12 @@ const LayoutWithAssistant = ({ children }) => {
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
+                {/* Notification badge */}
+                {totalNotifications > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white animate-pulse">
+                        {totalNotifications > 9 ? '9+' : totalNotifications}
+                    </span>
+                )}
             </button>
         </>
     );
