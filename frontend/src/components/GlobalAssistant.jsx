@@ -258,7 +258,7 @@ export default function GlobalAssistant() {
             {/* Floating button - draggable */}
             <div
                 ref={dragRef}
-                className="fixed z-50 select-none"
+                className="fixed z-[9999] select-none"
                 style={buttonStyle}
             >
                 <div className="relative">
@@ -296,7 +296,7 @@ export default function GlobalAssistant() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed w-96 h-[500px] bg-[#0B0F19] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden z-50"
+                        className="fixed w-96 h-[500px] bg-[#0B0F19] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden z-[9998]"
                         style={panelStyle}
                         data-testid="global-assistant-panel"
                     >
