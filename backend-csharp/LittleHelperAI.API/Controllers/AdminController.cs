@@ -273,6 +273,23 @@ public class AdminController : ControllerBase
         return Ok(new { message = $"Entry marked as {(isValid ? "valid" : "invalid")}" });
     }
 
+    [HttpPost("knowledge-base/invalidate-expired")]
+    public async Task<ActionResult> InvalidateExpiredEntries()
+    {
+        // Invalidate entries older than 30 days with low usage
+        var entries = await _aiService.GetKnowledgeBaseEntriesAsync(1000);
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+        var invalidated = 0;
+        
+        foreach (var entry in entries.Where(e => e.IsValid && e.HitCount < 5 && e.CreatedAt < thirtyDaysAgo))
+        {
+            await _aiService.ValidateKnowledgeEntryAsync(entry.Id, false);
+            invalidated++;
+        }
+        
+        return Ok(new { message = $"Invalidated {invalidated} expired entries" });
+    }
+
     // ==================== CREDIT PACKAGES ====================
 
     [HttpGet("credit-packages")]
