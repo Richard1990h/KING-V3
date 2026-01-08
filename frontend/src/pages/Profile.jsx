@@ -105,6 +105,7 @@ export default function Profile() {
         loadProviders();
         loadCreditHistory();
         checkPlanPermissions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadProfile = async () => {
