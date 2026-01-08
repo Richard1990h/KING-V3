@@ -380,6 +380,7 @@ function DirectMessagePanel({ friend, onClose, onRemoveFriend }) {
         loadMessages();
         const interval = setInterval(loadMessages, 5000); // Poll for new messages
         return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [friend.friend_user_id]);
 
     useEffect(() => {
@@ -391,9 +392,11 @@ function DirectMessagePanel({ friend, onClose, onRemoveFriend }) {
     const loadMessages = async () => {
         try {
             const res = await friendsAPI.getMessages(friend.friend_user_id);
-            setMessages(res.data);
+            // Defensive: ensure messages is always an array
+            setMessages(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Failed to load messages:', error);
+            setMessages([]);
         }
     };
 
