@@ -77,6 +77,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ICreditService, CreditService>();
 builder.Services.AddScoped<IAIService, AIService>();
+builder.Services.AddScoped<LittleHelperAI.Agents.IAIService>(sp => sp.GetRequiredService<AIService>());
+builder.Services.AddScoped<AIService>(); // Register concrete type for explicit resolution
 builder.Services.AddScoped<IJobOrchestrationService, JobOrchestrationService>();
 
 // Register Agents
