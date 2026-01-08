@@ -1461,6 +1461,9 @@ export default function Admin() {
                                 </div>
                             </div>
 
+                            {/* Admins Online Status Panel */}
+                            <AdminsOnlinePanel users={users} currentUserId={user?.id} />
+
                             {/* Maintenance Mode */}
                             <div className="glass-card rounded-xl p-6">
                                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
