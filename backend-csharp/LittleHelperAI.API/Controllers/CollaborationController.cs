@@ -113,7 +113,7 @@ public class CollaborationController : ControllerBase
                 CreatedAt = DateTime.UtcNow
             });
 
-        var baseUrl = _config["Frontend:Url"] ?? "https://codecollab-suite.preview.emergentagent.com";
+        var baseUrl = _config["Frontend:Url"] ?? "https://devcollab-12.preview.emergentagent.com";
         var shareUrl = $"{baseUrl}/workspace/{projectId}?share={shareToken}";
 
         return Ok(new {

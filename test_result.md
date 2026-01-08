@@ -80,7 +80,7 @@ None identified in configuration or structure.
 
 ### Test Environment
 - **Frontend URL**: http://localhost:3000 (React app running successfully)
-- **Backend URL**: https://codecollab-suite.preview.emergentagent.com (NOT WORKING - 520 errors)
+- **Backend URL**: https://devcollab-12.preview.emergentagent.com (NOT WORKING - 520 errors)
 - **Testing Agent**: Testing Subagent
 - **Test Date**: January 8, 2025
 
@@ -144,7 +144,7 @@ None identified in configuration or structure.
 ### Console Errors Detected
 ```
 CORS policy: No 'Access-Control-Allow-Origin' header
-REQUEST FAILED: https://codecollab-suite.preview.emergentagent.com/api/* - net::ERR_FAILED
+REQUEST FAILED: https://devcollab-12.preview.emergentagent.com/api/* - net::ERR_FAILED
 ```
 
 ### Unable to Test (Due to Backend Issues)
@@ -156,7 +156,7 @@ REQUEST FAILED: https://codecollab-suite.preview.emergentagent.com/api/* - net::
 - Any backend-dependent features
 
 ### Root Cause Analysis
-The .NET backend at `https://codecollab-suite.preview.emergentagent.com` is not running or misconfigured:
+The .NET backend at `https://devcollab-12.preview.emergentagent.com` is not running or misconfigured:
 1. Returns HTTP 520 errors (web server error)
 2. CORS not properly configured for localhost:3000 origin
 3. All API endpoints are inaccessible
