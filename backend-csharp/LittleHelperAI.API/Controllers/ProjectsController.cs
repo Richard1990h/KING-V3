@@ -207,7 +207,7 @@ If asked to create files or code, explain what you're creating.";
             await _projectService.SaveChatMessageAsync(aiMessage);
 
             // Deduct credits
-            await _creditService.DeductCreditsAsync(GetUserId(), aiResponse.Tokens / 1000.0 * 0.5, "Chat message", "chat", userMessage.ConversationId);
+            await _creditService.DeductCreditsAsync(GetUserId(), (decimal)(aiResponse.Tokens / 1000.0 * 0.5), "Chat message");
 
             return Ok(new { 
                 user_message = userMessage,
