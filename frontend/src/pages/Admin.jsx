@@ -108,7 +108,8 @@ export default function Admin() {
             return;
         }
         loadAllData();
-    }, [user]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, navigate]);
 
     const loadAllData = async () => {
         setLoading(true);
