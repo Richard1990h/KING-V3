@@ -640,25 +640,15 @@ export default function Admin() {
                                                 <div className="mt-3 flex gap-2">
                                                     <div className="relative flex-1">
                                                         <Input
-                                                            type={showProviderKey[provider.id] ? 'text' : 'password'}
-                                                            placeholder={provider.has_key ? '••••••••••••' : 'Enter API Key'}
+                                                            type="text"
+                                                            placeholder={provider.has_key ? provider.api_key || '••••••••••••' : 'Enter API Key'}
                                                             value={providerApiKey[provider.id] || ''}
                                                             onChange={(e) => setProviderApiKey(prev => ({
                                                                 ...prev,
                                                                 [provider.id]: e.target.value
                                                             }))}
-                                                            className="bg-white/5 border-white/10 pr-10"
+                                                            className="bg-white/5 border-white/10 font-mono text-sm"
                                                         />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowProviderKey(prev => ({
-                                                                ...prev,
-                                                                [provider.id]: !prev[provider.id]
-                                                            }))}
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                                        >
-                                                            {showProviderKey[provider.id] ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                        </button>
                                                     </div>
                                                     <Button
                                                         variant="outline"
