@@ -115,6 +115,16 @@ public class AuthService : IAuthService
         if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid email or password");
 
+        // Check maintenance mode (only block non-admins)
+        if (user.Role != "admin")
+        {
+            var settings = await _db.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT maintenance_mode FROM site_settings WHERE id = 'default'");
+            
+            if (settings?.maintenance_mode == true)
+                throw new UnauthorizedAccessException("System is currently under maintenance. Please try again later.");
+        }
+
         // Update last login
         await _db.ExecuteAsync(
             "UPDATE users SET last_login_at = @Now, last_login_ip = @Ip WHERE id = @Id",
