@@ -571,3 +571,6 @@ CREATE TABLE IF NOT EXISTS `user_google_drive_config` (
     INDEX `idx_gdrive_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Add appear_offline column to users table for admin visibility feature
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `appear_offline` TINYINT(1) DEFAULT 0;
+
