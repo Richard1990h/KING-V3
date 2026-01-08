@@ -158,17 +158,22 @@ export default function Workspace() {
                 filesAPI.getAll(projectId),
                 chatAPI.getHistory(projectId)
             ]);
-            setProject(projectRes.data);
-            setFiles(filesRes.data);
-            setChatMessages(chatRes.data);
+            setProject(projectRes.data || null);
+            // Defensive: ensure arrays are always arrays
+            const filesData = Array.isArray(filesRes.data) ? filesRes.data : [];
+            const chatData = Array.isArray(chatRes.data) ? chatRes.data : [];
+            setFiles(filesData);
+            setChatMessages(chatData);
             
             // Select first file
-            if (filesRes.data.length > 0) {
-                selectFile(filesRes.data[0]);
+            if (filesData.length > 0) {
+                selectFile(filesData[0]);
             }
         } catch (error) {
             console.error('Failed to load project:', error);
-            navigate('/dashboard');
+            // Don't navigate away on error - allow user to stay and retry
+            setFiles([]);
+            setChatMessages([]);
         } finally {
             setLoading(false);
         }
@@ -177,11 +182,16 @@ export default function Workspace() {
     const loadAgents = async () => {
         try {
             const res = await agentsAPI.getAll();
-            setAgents(res.data);
+            // Defensive: ensure agents is always an array
+            const agentsData = Array.isArray(res.data) ? res.data : [];
+            setAgents(agentsData);
             // Enable all agents by default (they work together)
-            setEnabledAgents(res.data.map(a => a.id));
+            setEnabledAgents(agentsData.map(a => a.id));
         } catch (error) {
             console.error('Failed to load agents:', error);
+            // Set default agents on error for graceful degradation
+            setAgents([]);
+            setEnabledAgents([]);
         }
     };
 
@@ -189,9 +199,11 @@ export default function Workspace() {
         setLoadingConversations(true);
         try {
             const res = await api.get('/conversations');
-            setGlobalConversations(res.data);
+            // Defensive: ensure conversations is always an array
+            setGlobalConversations(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Failed to load global conversations:', error);
+            setGlobalConversations([]);
         } finally {
             setLoadingConversations(false);
         }
@@ -200,10 +212,12 @@ export default function Workspace() {
     const loadConversationIntoChat = async (conversationId) => {
         try {
             const res = await api.get(`/conversations/${conversationId}/messages`);
-            setChatMessages(res.data);
+            // Defensive: ensure messages is always an array
+            setChatMessages(Array.isArray(res.data) ? res.data : []);
             setShowConversationLoader(false);
         } catch (error) {
             console.error('Failed to load conversation:', error);
+            setChatMessages([]);
         }
     };
 
