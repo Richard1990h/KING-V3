@@ -441,6 +441,53 @@ public class AuthService : IAuthService
         return HashPassword(password) == hash;
     }
 
+    // ==================== GOOGLE DRIVE USER CONFIG ====================
+    
+    public async Task<object?> GetUserGoogleDriveConfigAsync(string userId)
+    {
+        var config = await _db.QueryFirstOrDefaultAsync<dynamic>(
+            "SELECT is_connected, email, access_token, refresh_token, updated_at FROM user_google_drive_config WHERE user_id = @UserId",
+            new { UserId = userId });
+        
+        if (config == null)
+            return null;
+        
+        return new {
+            is_connected = config.is_connected,
+            email = config.email,
+            // Don't expose full tokens in response, just indicate they exist
+            has_access_token = !string.IsNullOrEmpty(config.access_token),
+            has_refresh_token = !string.IsNullOrEmpty(config.refresh_token),
+            updated_at = config.updated_at
+        };
+    }
+
+    public async Task SaveUserGoogleDriveConfigAsync(string userId, bool isConnected, string? email, string? accessToken, string? refreshToken)
+    {
+        var now = DateTime.UtcNow;
+        
+        await _db.ExecuteAsync(@"
+            INSERT INTO user_google_drive_config (id, user_id, is_connected, email, access_token, refresh_token, created_at, updated_at)
+            VALUES (@Id, @UserId, @IsConnected, @Email, @AccessToken, @RefreshToken, @Now, @Now)
+            ON DUPLICATE KEY UPDATE
+            is_connected = @IsConnected,
+            email = COALESCE(@Email, email),
+            access_token = COALESCE(@AccessToken, access_token),
+            refresh_token = COALESCE(@RefreshToken, refresh_token),
+            updated_at = @Now",
+            new {
+                Id = Guid.NewGuid().ToString(),
+                UserId = userId,
+                IsConnected = isConnected,
+                Email = email,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                Now = now
+            });
+        
+        _logger.LogInformation("User {UserId} Google Drive config updated. Connected: {IsConnected}", userId, isConnected);
+    }
+
     private static UserResponse MapToUserResponse(User user) => new(
         user.Id,
         user.Email,
