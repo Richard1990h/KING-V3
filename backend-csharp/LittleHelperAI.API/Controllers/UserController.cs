@@ -162,3 +162,10 @@ public record AddApiKeyRequest(
     string? ModelPreference,
     bool IsDefault = false
 );
+
+public record GoogleDriveConfigRequest(
+    bool IsConnected,
+    string? Email,
+    string? AccessToken,
+    string? RefreshToken
+);
