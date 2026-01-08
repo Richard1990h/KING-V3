@@ -516,7 +516,7 @@ export default function Workspace() {
                 }]);
                 
                 // Call AI to execute the task
-                const res = await api.post(`/api/ai/execute-task`, {
+                const res = await api.post(`/ai/execute-task`, {
                     project_id: projectId,
                     task: task.task,
                     agent: task.agent
