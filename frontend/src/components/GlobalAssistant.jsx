@@ -221,7 +221,15 @@ export default function GlobalAssistant() {
         return () => document.removeEventListener('mouseup', handleGlobalMouseUp);
     }, [isDragging]);
 
-    if (!user) return null;
+    // Debug: Log user state
+    useEffect(() => {
+        console.log("GlobalAssistant: user =", user, "isOpen =", isOpen);
+    }, [user, isOpen]);
+
+    if (!user) {
+        console.log("GlobalAssistant: user is null/undefined, returning null");
+        return null;
+    }
 
     // Calculate button position styles
     const buttonStyle = position.x !== null ? {
