@@ -9,23 +9,50 @@ services:
       - "8001:8001"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__MySQL=Server=mysql;Database=littlehelper_ai;User=root;Password=rootpassword;
-      - ConnectionStrings__Redis=redis:6379
+      - ASPNETCORE_URLS=http://+:8001
+      - ConnectionStrings__MySQL=Server=mysql;Database=littlehelper_ai;User=littlehelper;Password=${DB_PASSWORD:-StrongPassword123!};Port=3306;AllowPublicKeyRetrieval=True;SslMode=Preferred;
+      - ConnectionStrings__Redis=redis:6379,abortConnect=false
+      - JwtSettings__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-chars}
+      - JwtSettings__Issuer=LittleHelperAI
+      - JwtSettings__Audience=LittleHelperAI
+      - JwtSettings__ExpirationMinutes=1440
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - littlehelper-net
 
   mysql:
     image: mysql:8.0
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-RootPassword123!}
       - MYSQL_DATABASE=littlehelper_ai
+      - MYSQL_USER=littlehelper
+      - MYSQL_PASSWORD=${DB_PASSWORD:-StrongPassword123!}
     volumes:
       - mysql_data:/var/lib/mysql
+      - ../database/littlehelper_ai_complete.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-RootPassword123!}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - littlehelper-net
 
   redis:
     image: redis:7-alpine
@@ -33,7 +60,36 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - littlehelper-net
+
+  # Optional: Frontend (can be deployed separately)
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://api:8001
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - littlehelper-net
+    profiles:
+      - with-frontend
+
+networks:
+  littlehelper-net:
+    driver: bridge
 
 volumes:
   mysql_data:
