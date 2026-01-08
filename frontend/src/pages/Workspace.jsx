@@ -521,9 +521,20 @@ export default function Workspace() {
                     agent: task.agent
                 });
                 
-                // Track created files
+                // Track created files and save them to the database
                 if (res.data.files && res.data.files.length > 0) {
-                    filesCreatedTotal = [...filesCreatedTotal, ...res.data.files];
+                    for (const file of res.data.files) {
+                        try {
+                            // Create the file in the database
+                            await filesAPI.create(projectId, {
+                                path: file.path,
+                                content: file.content
+                            });
+                            filesCreatedTotal.push(file);
+                        } catch (fileErr) {
+                            console.error('Failed to create file:', file.path, fileErr);
+                        }
+                    }
                     
                     // Show which files were created
                     const fileNames = res.data.files.map(f => f.path).join(', ');
