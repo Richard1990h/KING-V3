@@ -115,6 +115,16 @@ export default function Admin() {
         language: 'en',
         free_credits: 100
     });
+    
+    // Site Settings state (announcements, etc.)
+    const [siteSettings, setSiteSettings] = useState({
+        announcement_enabled: false,
+        announcement_message: '',
+        announcement_type: 'info', // info, warning, success
+        maintenance_mode: false,
+        admins_auto_friend: true
+    });
+    const [savingSiteSettings, setSavingSiteSettings] = useState(false);
 
     useEffect(() => {
         if (user?.role !== 'admin') {
