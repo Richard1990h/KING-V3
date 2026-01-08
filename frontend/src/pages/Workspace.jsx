@@ -953,8 +953,8 @@ export default function Workspace() {
                     </div>
                 )}
 
-                {/* Right panel - Chat/Output/LLM - expands when fullscreen */}
-                <div className={`${chatFullscreen ? 'flex-1' : 'w-96'} border-l border-white/10 bg-[#0B0F19] flex flex-col transition-all duration-300`}>
+                {/* Right panel - Chat/Output/LLM - Responsive */}
+                <div className={`${chatFullscreen ? 'flex-1' : 'w-full md:w-96'} border-t md:border-t-0 md:border-l border-white/10 bg-[#0B0F19] flex flex-col transition-all duration-300 ${selectedFile && !chatFullscreen ? 'hidden md:flex' : 'flex'}`}>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                         <TabsList className="h-10 w-full justify-start rounded-none border-b border-white/10 bg-transparent p-0">
                             <TabsTrigger 
