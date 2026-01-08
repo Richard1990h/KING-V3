@@ -36,18 +36,25 @@ export function FriendsSidebar({ isOpen, onClose }) {
     const loadFriends = async () => {
         try {
             const res = await friendsAPI.getFriends();
-            setFriends(res.data);
+            // Defensive: ensure friends is always an array
+            setFriends(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Failed to load friends:', error);
+            setFriends([]);
         }
     };
 
     const loadRequests = async () => {
         try {
             const res = await friendsAPI.getRequests();
-            setRequests(res.data);
+            // Defensive: ensure requests structure has arrays
+            setRequests({
+                incoming: Array.isArray(res.data?.incoming) ? res.data.incoming : [],
+                outgoing: Array.isArray(res.data?.outgoing) ? res.data.outgoing : []
+            });
         } catch (error) {
             console.error('Failed to load requests:', error);
+            setRequests({ incoming: [], outgoing: [] });
         }
     };
 
@@ -55,12 +62,17 @@ export function FriendsSidebar({ isOpen, onClose }) {
         try {
             const res = await friendsAPI.getUnreadCount();
             const byUser = {};
-            res.data.by_user?.forEach(u => {
-                byUser[u.sender_id] = u.count;
+            // Defensive: ensure by_user is an array before iterating
+            const byUserData = Array.isArray(res.data?.by_user) ? res.data.by_user : [];
+            byUserData.forEach(u => {
+                if (u && u.sender_id !== undefined) {
+                    byUser[u.sender_id] = u.count || 0;
+                }
             });
             setUnreadCounts(byUser);
         } catch (error) {
             console.error('Failed to load unread counts:', error);
+            setUnreadCounts({});
         }
     };
 
