@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Net.WebSockets;
 using System.Text.Json;
+using System.Security.Cryptography;
 using LittleHelperAI.API.Services;
 using LittleHelperAI.Data;
 
@@ -16,19 +17,20 @@ public class CollaborationController : ControllerBase
     private readonly IDbContext _db;
     private readonly IConfiguration _config;
     private readonly ILogger<CollaborationController> _logger;
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public CollaborationController(
         CollaborationService collaborationService, 
         IDbContext db,
         IConfiguration config,
-        ILogger<CollaborationController> logger)
+        ILogger<CollaborationController> logger,
+        IHttpClientFactory httpClientFactory)
     {
         _collaborationService = collaborationService;
         _db = db;
         _config = config;
         _logger = logger;
-        _httpClient = new HttpClient();
+        _httpClientFactory = httpClientFactory;
     }
 
     // WebSocket endpoint for real-time collaboration
