@@ -12,11 +12,19 @@ namespace LittleHelperAI.API.Controllers;
 public class ProjectsController : ControllerBase
 {
     private readonly IProjectService _projectService;
+    private readonly IAIService _aiService;
+    private readonly ICreditService _creditService;
     private readonly ILogger<ProjectsController> _logger;
 
-    public ProjectsController(IProjectService projectService, ILogger<ProjectsController> logger)
+    public ProjectsController(
+        IProjectService projectService, 
+        IAIService aiService,
+        ICreditService creditService,
+        ILogger<ProjectsController> logger)
     {
         _projectService = projectService;
+        _aiService = aiService;
+        _creditService = creditService;
         _logger = logger;
     }
 
