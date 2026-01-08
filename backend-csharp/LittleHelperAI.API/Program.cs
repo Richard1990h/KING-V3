@@ -10,6 +10,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using StackExchange.Redis;
 
+// Alias to avoid ambiguity
+using ApiIAIService = LittleHelperAI.API.Services.IAIService;
+using AgentIAIService = LittleHelperAI.Agents.IAIService;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add configuration
@@ -72,13 +76,15 @@ else
     builder.Services.AddSingleton<ICacheService, InMemoryCacheService>();
 }
 
-// Register Application Services
+// Register AIService as concrete type first, then both interfaces
+builder.Services.AddScoped<AIService>();
+builder.Services.AddScoped<ApiIAIService>(sp => sp.GetRequiredService<AIService>());
+builder.Services.AddScoped<AgentIAIService>(sp => sp.GetRequiredService<AIService>());
+
+// Register other Application Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ICreditService, CreditService>();
-builder.Services.AddScoped<IAIService, AIService>();
-builder.Services.AddScoped<LittleHelperAI.Agents.IAIService>(sp => sp.GetRequiredService<AIService>());
-builder.Services.AddScoped<AIService>(); // Register concrete type for explicit resolution
 builder.Services.AddScoped<IJobOrchestrationService, JobOrchestrationService>();
 
 // Register Agents
