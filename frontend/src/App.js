@@ -5,6 +5,7 @@ import { I18nProvider } from "./lib/i18n";
 import { Toaster } from "./components/ui/sonner";
 import GlobalAssistant from "./components/GlobalAssistant";
 import { FriendsSidebar } from "./components/FriendsSidebar";
+import { useNotifications } from "./hooks/useNotifications";
 import { useState } from "react";
 
 // Pages
