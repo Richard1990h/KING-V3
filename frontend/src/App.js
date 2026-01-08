@@ -4,6 +4,8 @@ import { ThemeProvider } from "./lib/theme";
 import { I18nProvider } from "./lib/i18n";
 import { Toaster } from "./components/ui/sonner";
 import GlobalAssistant from "./components/GlobalAssistant";
+import { FriendsSidebar } from "./components/FriendsSidebar";
+import { useState } from "react";
 
 // Pages
 import Landing from "./pages/Landing";
