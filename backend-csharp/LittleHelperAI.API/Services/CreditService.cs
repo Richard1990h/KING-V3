@@ -251,6 +251,37 @@ public class CreditService : ICreditService
         return result > 0;
     }
 
+    // Wrapper methods for admin controller with new request types
+    public async Task<SubscriptionPlan> CreateSubscriptionPlanAsync(CreateSubscriptionPlanRequest request)
+    {
+        var legacyRequest = new CreatePlanRequest(
+            request.Id, request.Name, request.Description,
+            request.PriceMonthly, request.PriceYearly, request.DailyCredits,
+            request.MaxConcurrentWorkspaces, request.AllowsOwnApiKeys,
+            request.Features, request.SortOrder
+        );
+        return await CreateSubscriptionPlanAsync(legacyRequest);
+    }
+
+    public async Task<bool> UpdateSubscriptionPlanAsync(string planId, UpdateSubscriptionPlanRequest request)
+    {
+        var legacyRequest = new UpdatePlanRequest(
+            request.Name, request.Description, request.PriceMonthly, request.PriceYearly,
+            request.DailyCredits, request.MaxConcurrentWorkspaces, request.AllowsOwnApiKeys,
+            request.Features, request.IsActive, request.SortOrder
+        );
+        var result = await UpdateSubscriptionPlanAsync(planId, legacyRequest);
+        return result != null;
+    }
+
+    public async Task<bool> DeleteSubscriptionPlanAsync(string planId)
+    {
+        var result = await _db.ExecuteAsync(
+            "DELETE FROM subscription_plans WHERE id = @Id",
+            new { Id = planId });
+        return result > 0;
+    }
+
     public async Task<int> DistributeDailyCreditsAsync()
     {
         // Get active subscriptions with their plan credits
