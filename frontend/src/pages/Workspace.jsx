@@ -22,12 +22,14 @@ import {
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { MessageContent } from '../components/CodeBlock';
+import { CodeRunner } from '../components/CodeRunner';
 import { 
     Zap, ArrowLeft, Play, Hammer, Save, Download, Send, Plus, Trash2,
     File, FileCode, Folder, ChevronRight, ChevronDown, MoreVertical,
     MessageSquare, Terminal, Cpu, LayoutGrid, Search, Code, TestTube,
     Bug, CheckCircle, Mic, RefreshCw, X, Maximize2, Minimize2, History,
-    FolderOpen, ListTodo, Edit3, Check, AlertCircle, Loader2, Upload
+    FolderOpen, ListTodo, Edit3, Check, AlertCircle, Loader2, Upload,
+    PlayCircle, Cloud, Users
 } from 'lucide-react';
 
 const AGENT_ICONS = {
