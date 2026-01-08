@@ -1110,10 +1110,10 @@ export default function Workspace() {
                                                     </div>
                                                 )}
                                                 {/* Use MessageContent for code block rendering in simple chat mode */}
-                                                {!multiAgentMode && msg.role === 'assistant' ? (
+                                                {!multiAgentMode && msg.role === 'assistant' && msg.content ? (
                                                     <MessageContent content={msg.content} />
                                                 ) : (
-                                                    <p className="text-sm whitespace-pre-wrap">{cleanMessageContent(msg.content)}</p>
+                                                    <p className="text-sm whitespace-pre-wrap">{cleanMessageContent(msg.content || '')}</p>
                                                 )}
                                             </div>
                                         </div>
