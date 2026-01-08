@@ -230,15 +230,16 @@ public class AIService : IAIService, AgentIAIService
     {
         _logger.LogInformation("Calling Emergent/OpenAI LLM with key: {KeyPrefix}...", apiKey.Substring(0, Math.Min(20, apiKey.Length)));
         
+        var model = _config["EmergentLLM:Model"] ?? "gpt-4o-mini";
         var requestBody = new
         {
-            model = _config["EmergentLLM:Model"] ?? "gpt-4o-mini",
+            model = $"openai/{model}", // Emergent uses provider/model format
             messages = BuildMessages(prompt, systemPrompt),
             max_tokens = maxTokens,
             temperature = 0.7
         };
 
-        var baseUrl = _config["EmergentLLM:BaseUrl"] ?? "https://api.openai.com/v1";
+        var baseUrl = _config["EmergentLLM:BaseUrl"] ?? "https://integrations.emergentagent.com/llm";
         var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/chat/completions")
         {
             Content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json")
@@ -260,7 +261,7 @@ public class AIService : IAIService, AgentIAIService
         var tokens = 0;
         try { tokens = result.GetProperty("usage").GetProperty("total_tokens").GetInt32(); } catch { }
         
-        return new AgentAIResponse(content, "emergent", _config["EmergentLLM:Model"] ?? "gpt-4o-mini", tokens);
+        return new AgentAIResponse(content, "emergent", model, tokens);
     }
 
     private async Task<AgentAIResponse> CallFreeProviderAsync(string prompt, string? systemPrompt, FreeAIProvider provider, int maxTokens)
