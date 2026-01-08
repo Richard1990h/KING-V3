@@ -144,5 +144,5 @@ using (var scope = app.Services.CreateScope())
     await db.InitializeAsync();
 }
 
-Console.WriteLine("LittleHelper AI API starting on port 8001...");
-app.Run("http://0.0.0.0:8001");
+Console.WriteLine("LittleHelper AI API starting on port 8002...");
+app.Run("http://0.0.0.0:8002");
