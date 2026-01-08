@@ -87,6 +87,17 @@ export default function Admin() {
     });
     const [creatingPlan, setCreatingPlan] = useState(false);
     
+    // Credit Packages state
+    const [creditPackages, setCreditPackages] = useState([]);
+    const [editingPackage, setEditingPackage] = useState(null);
+    const [packageForm, setPackageForm] = useState({
+        name: '',
+        credits: 0,
+        price: 0,
+        is_active: true
+    });
+    const [creatingPackage, setCreatingPackage] = useState(false);
+    
     // Free AI Providers state
     const [freeProviders, setFreeProviders] = useState([]);
     const [providerApiKey, setProviderApiKey] = useState({});
