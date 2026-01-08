@@ -553,3 +553,21 @@ CREATE INDEX IF NOT EXISTS idx_chat_timestamp ON chat_history(timestamp);
 CREATE INDEX IF NOT EXISTS idx_collab_project ON project_collaborators(project_id);
 CREATE INDEX IF NOT EXISTS idx_collab_user ON project_collaborators(user_id);
 
+
+-- =====================================================
+-- USER GOOGLE DRIVE CONFIG TABLE
+-- Stores per-user Google Drive connection details
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `user_google_drive_config` (
+    `id` VARCHAR(36) PRIMARY KEY,
+    `user_id` VARCHAR(36) NOT NULL UNIQUE,
+    `is_connected` TINYINT(1) DEFAULT 0,
+    `email` VARCHAR(255),
+    `access_token` TEXT,
+    `refresh_token` TEXT,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_gdrive_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
