@@ -30,4 +30,8 @@ public interface IAuthService
     Task<DefaultSettings?> GetDefaultSettingsAsync();
     Task UpdateDefaultSettingsAsync(UpdateDefaultsRequest request);
     Task<List<IpRecord>> GetIpRecordsAsync(int limit);
+    
+    // Google Drive user configuration
+    Task<object?> GetUserGoogleDriveConfigAsync(string userId);
+    Task SaveUserGoogleDriveConfigAsync(string userId, bool isConnected, string? email, string? accessToken, string? refreshToken);
 }

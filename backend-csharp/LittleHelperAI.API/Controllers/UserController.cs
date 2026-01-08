@@ -157,7 +157,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("google-drive")]
-    public async Task<ActionResult> SaveGoogleDriveConfig([FromBody] GoogleDriveConfigRequest request)
+    public async Task<ActionResult> SaveGoogleDriveConfig([FromBody] UserGoogleDriveConfigRequest request)
     {
         var userId = User.FindFirst("user_id")?.Value;
         if (string.IsNullOrEmpty(userId))
@@ -187,7 +187,7 @@ public record AddApiKeyRequest(
     bool IsDefault = false
 );
 
-public record GoogleDriveConfigRequest(
+public record UserGoogleDriveConfigRequest(
     bool IsConnected,
     string? Email,
     string? AccessToken,
