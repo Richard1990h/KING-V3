@@ -48,6 +48,7 @@ export default function Credits() {
         if (sessionId) {
             checkPaymentStatus(sessionId);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadData = async () => {
