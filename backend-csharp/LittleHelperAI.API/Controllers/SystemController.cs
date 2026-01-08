@@ -147,17 +147,30 @@ public class SystemController : ControllerBase
     {
         try
         {
-            var systemPrompt = "You are LittleHelper AI, a helpful coding assistant. Provide clear, concise answers.";
+            var systemPrompt = "You are LittleHelper AI, a helpful coding assistant. Provide clear, concise answers. Be friendly and conversational.";
             var response = await _aiService.GenerateAsync(request.Message, systemPrompt, 2000);
+            
+            var conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
+            var timestamp = DateTime.UtcNow.ToString("o");
             
             return Ok(new
             {
-                id = Guid.NewGuid().ToString(),
-                role = "assistant",
-                content = response.Content,
-                provider = response.Provider,
-                model = response.Model,
-                tokens_used = response.Tokens
+                conversation_id = conversationId,
+                user_message = new {
+                    id = Guid.NewGuid().ToString(),
+                    role = "user",
+                    content = request.Message,
+                    timestamp = timestamp
+                },
+                ai_message = new {
+                    id = Guid.NewGuid().ToString(),
+                    role = "assistant",
+                    content = response.Content,
+                    provider = response.Provider,
+                    model = response.Model,
+                    tokens_used = response.Tokens,
+                    timestamp = timestamp
+                }
             });
         }
         catch (Exception ex)
