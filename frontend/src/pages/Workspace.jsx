@@ -1400,6 +1400,16 @@ export default function Workspace() {
                     </Tabs>
                 </div>
             </div>
+            
+            {/* Code Runner Modal */}
+            <CodeRunner
+                code={fileContent}
+                language={getSyntaxLanguage(selectedFile?.path || '')}
+                filename={selectedFile?.path}
+                projectFiles={files}
+                isOpen={showCodeRunner}
+                onClose={() => setShowCodeRunner(false)}
+            />
         </div>
     );
 }
