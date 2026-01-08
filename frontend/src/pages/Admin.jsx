@@ -718,7 +718,7 @@ export default function Admin() {
                                                     <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                                                         <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                                         <p>No credit packages yet</p>
-                                                        <p className="text-xs mt-1">Click "New Package" to create one</p>
+                                                        <p className="text-xs mt-1">Click &quot;New Package&quot; to create one</p>
                                                     </TableCell>
                                                 </TableRow>
                                             ) : (
