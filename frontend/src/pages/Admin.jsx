@@ -926,21 +926,21 @@ export default function Admin() {
                                         <TableBody>
                                             {agentActivity.map((activity) => (
                                                 <TableRow key={activity.id} className="border-white/10">
-                                                    <TableCell className="font-medium">{activity.agent_id}</TableCell>
+                                                    <TableCell className="font-medium">{activity.agentId || activity.agent_id}</TableCell>
                                                     <TableCell>{activity.action}</TableCell>
                                                     <TableCell>
                                                         <span className={`px-2 py-1 rounded text-xs ${
-                                                            activity.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                                                            activity.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                                                            (activity.success ?? activity.status === 'completed') ? 'bg-green-500/20 text-green-400' :
+                                                            (activity.error || activity.status === 'failed') ? 'bg-red-500/20 text-red-400' :
                                                             'bg-yellow-500/20 text-yellow-400'
                                                         }`}>
-                                                            {activity.status}
+                                                            {activity.success ? 'completed' : activity.error ? 'failed' : (activity.status || 'pending')}
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell>{activity.duration_ms ? `${activity.duration_ms}ms` : '-'}</TableCell>
-                                                    <TableCell>{(activity.tokens_input || 0) + (activity.tokens_output || 0)}</TableCell>
+                                                    <TableCell>{activity.durationMs || activity.duration_ms ? `${activity.durationMs || activity.duration_ms}ms` : '-'}</TableCell>
+                                                    <TableCell>{(activity.tokensUsed || activity.tokens_used || activity.tokens_input || 0) + (activity.tokens_output || 0)}</TableCell>
                                                     <TableCell className="text-gray-400">
-                                                        {formatRelativeTime(activity.created_at)}
+                                                        {formatRelativeTime(activity.timestamp || activity.created_at)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
