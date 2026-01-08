@@ -34,4 +34,8 @@ public interface IAuthService
     // Google Drive user configuration
     Task<object?> GetUserGoogleDriveConfigAsync(string userId);
     Task SaveUserGoogleDriveConfigAsync(string userId, bool isConnected, string? email, string? accessToken, string? refreshToken);
+    
+    // User visibility (admin appear offline feature)
+    Task<object> GetUserVisibilityAsync(string userId);
+    Task UpdateUserVisibilityAsync(string userId, bool appearOffline);
 }
