@@ -64,6 +64,9 @@ var connectionString = builder.Configuration.GetConnectionString("MySQL")
     ?? "Server=localhost;Database=littlehelper_ai;User=root;Password=;";
 builder.Services.AddSingleton<IDbContext>(new MySqlDbContext(connectionString));
 
+// Register HttpClientFactory for external API calls
+builder.Services.AddHttpClient();
+
 // Register Redis (optional - gracefully handle if not available)
 var redisConnection = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrEmpty(redisConnection))
