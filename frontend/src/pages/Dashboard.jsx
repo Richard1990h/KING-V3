@@ -316,7 +316,7 @@ export default function Dashboard() {
                                     
                                     <div className="flex items-center gap-2 text-xs text-gray-500">
                                         <Calendar size={12} />
-                                        <span>{formatDate(project.created_at)}</span>
+                                        <span>{formatDate(project.created_at || project.createdAt)}</span>
                                     </div>
                                 </Link>
                             </motion.div>
