@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using LittleHelperAI.Data;
+using LittleHelperAI.API.Services;
 using System.Text.Json;
 using System.Security.Cryptography;
 
@@ -14,13 +15,15 @@ public class FriendsController : ControllerBase
 {
     private readonly IDbContext _db;
     private readonly ILogger<FriendsController> _logger;
+    private readonly NotificationService _notificationService;
     private const int MAX_MESSAGE_LENGTH = 5000;
     private const int MAX_FRIENDS_PER_PAGE = 50;
 
-    public FriendsController(IDbContext db, ILogger<FriendsController> logger)
+    public FriendsController(IDbContext db, ILogger<FriendsController> logger, NotificationService notificationService)
     {
         _db = db;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     // Get friends list with pagination
