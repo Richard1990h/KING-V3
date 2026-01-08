@@ -1109,7 +1109,12 @@ export default function Workspace() {
                                                         </span>
                                                     </div>
                                                 )}
-                                                <p className="text-sm whitespace-pre-wrap">{cleanMessageContent(msg.content)}</p>
+                                                {/* Use MessageContent for code block rendering in simple chat mode */}
+                                                {!multiAgentMode && msg.role === 'assistant' ? (
+                                                    <MessageContent content={msg.content} />
+                                                ) : (
+                                                    <p className="text-sm whitespace-pre-wrap">{cleanMessageContent(msg.content)}</p>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
