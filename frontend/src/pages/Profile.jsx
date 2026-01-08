@@ -20,7 +20,7 @@ import {
 import { 
     ArrowLeft, User, Camera, Lock, Palette, Check, RefreshCw,
     Eye, EyeOff, Trash2, Globe, Key, Zap, Plus, LogOut,
-    AlertCircle, CheckCircle, Crown, CreditCard
+    AlertCircle, CheckCircle, Crown, CreditCard, Loader2
 } from 'lucide-react';
 
 const LANGUAGES = [
