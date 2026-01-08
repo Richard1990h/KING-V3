@@ -24,13 +24,18 @@ public interface ICreditService
     Task<bool> UpdateCreditPackageAsync(string packageId, UpdateCreditPackageRequest request);
     Task<bool> DeleteCreditPackageAsync(string packageId);
     
-    // Subscription Plans
+    // Subscription Plans (Admin Controller - new format)
     Task<List<SubscriptionPlan>> GetSubscriptionPlansAsync(bool activeOnly = true);
     Task<SubscriptionPlan> CreateSubscriptionPlanAsync(CreateSubscriptionPlanRequest request);
     Task<bool> UpdateSubscriptionPlanAsync(string planId, UpdateSubscriptionPlanRequest request);
     Task<bool> DeleteSubscriptionPlanAsync(string planId);
     
-    // Legacy subscription methods
+    // Subscription Plans (Plans Controller - legacy format)
+    Task<SubscriptionPlan> CreateSubscriptionPlanAsync(CreatePlanRequest request);
+    Task<SubscriptionPlan?> UpdateSubscriptionPlanAsync(string planId, UpdatePlanRequest request);
+    Task<bool> DeactivateSubscriptionPlanAsync(string planId);
+    
+    // Subscription Management
     Task<int> DistributeDailyCreditsAsync();
     Task<UserSubscriptionResponse> GetUserSubscriptionAsync(string userId);
     Task<WorkspaceLimitResponse> CheckWorkspaceLimitAsync(string userId);
