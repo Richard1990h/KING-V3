@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../lib/auth';
-import { adminAPI } from '../lib/api';
+import { adminAPI, siteSettingsAPI } from '../lib/api';
 import { formatCredits, formatDate, formatRelativeTime } from '../lib/utils';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
