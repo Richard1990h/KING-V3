@@ -492,41 +492,74 @@ public class MySqlDbContext : IDbContext
 
     private async Task InsertDefaultDataAsync(MySqlConnection connection)
     {
-        // Insert default subscription plans
+        // Insert default subscription plans - Monthly Plans
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, daily_credits, max_concurrent_workspaces, allows_own_api_keys, features, sort_order) VALUES
-            ('free', 'Free', 'Basic access with limited credits', 0, 0, 50, 1, FALSE, '[""Basic code generation"", ""50 daily credits"", ""1 workspace""]', 0)");
+            ('free', 'Free', 'Basic access with limited credits', 0, 0, 50, 1, FALSE, '[""50 daily credits"", ""1 workspace"", ""Basic code generation"", ""Community support""]', 0)");
         
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, daily_credits, max_concurrent_workspaces, allows_own_api_keys, features, sort_order) VALUES
-            ('starter', 'Starter', 'For individual developers', 9.99, 99, 200, 3, FALSE, '[""200 daily credits"", ""3 workspaces"", ""Priority support""]', 1)");
+            ('starter', 'Starter', 'For individual developers getting started', 9.99, 99.00, 200, 3, FALSE, '[""200 daily credits"", ""3 workspaces"", ""All 7 AI agents"", ""Priority queue"", ""Email support""]', 1)");
         
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, daily_credits, max_concurrent_workspaces, allows_own_api_keys, features, sort_order) VALUES
-            ('pro', 'Pro', 'For professional developers', 29.99, 299, 1000, 10, TRUE, '[""1000 daily credits"", ""10 workspaces"", ""Own API keys"", ""Advanced AI models""]', 2)");
+            ('pro', 'Pro', 'For professional developers and freelancers', 29.99, 299.00, 1000, 10, TRUE, '[""1000 daily credits"", ""10 workspaces"", ""All 7 AI agents"", ""Own API keys"", ""Advanced AI models"", ""Priority support""]', 2)");
         
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, daily_credits, max_concurrent_workspaces, allows_own_api_keys, features, sort_order) VALUES
-            ('enterprise', 'Enterprise', 'For teams and organizations', 99.99, 999, 5000, -1, TRUE, '[""5000 daily credits"", ""Unlimited workspaces"", ""Own API keys"", ""SLA support"", ""Custom integrations""]', 3)");
+            ('team', 'Team', 'For small teams and startups', 79.99, 799.00, 3000, 25, TRUE, '[""3000 daily credits"", ""25 workspaces"", ""All 7 AI agents"", ""Own API keys"", ""Team collaboration"", ""Priority support"", ""Custom integrations""]', 3)");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO subscription_plans (id, name, description, price_monthly, price_yearly, daily_credits, max_concurrent_workspaces, allows_own_api_keys, features, sort_order) VALUES
+            ('enterprise', 'Enterprise', 'For large teams and organizations', 199.99, 1999.00, 10000, -1, TRUE, '[""10000 daily credits"", ""Unlimited workspaces"", ""All 7 AI agents"", ""Own API keys"", ""Custom AI models"", ""SLA support"", ""Custom integrations"", ""Dedicated account manager""]', 4)");
 
-        // Insert default credit packages
+        // Insert default credit packages - Add More Credits
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
-            ('pack-100', '100 Credits', 100, 4.99, 0)");
+            ('pack-50', 'Starter Pack', 50, 2.99, 0)");
         
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
-            ('pack-500', '500 Credits', 500, 19.99, 1)");
+            ('pack-100', '100 Credits', 100, 4.99, 1)");
         
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
-            ('pack-1000', '1000 Credits', 1000, 34.99, 2)");
+            ('pack-250', '250 Credits', 250, 9.99, 2)");
         
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
-            ('pack-5000', '5000 Credits', 5000, 149.99, 3)");
+            ('pack-500', '500 Credits', 500, 17.99, 3)");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
+            ('pack-1000', '1000 Credits', 1000, 29.99, 4)");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
+            ('pack-2500', '2500 Credits', 2500, 69.99, 5)");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
+            ('pack-5000', '5000 Credits', 5000, 129.99, 6)");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO credit_packages (id, name, credits, price, sort_order) VALUES
+            ('pack-10000', '10000 Credits', 10000, 229.99, 7)");
 
-        // Insert default settings
+        // Insert default system settings
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO system_settings (setting_key, setting_value, setting_type) VALUES
+            ('credits_per_1k_tokens_chat', '0.5', 'decimal')");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO system_settings (setting_key, setting_value, setting_type) VALUES
+            ('credits_per_1k_tokens_project', '1.0', 'decimal')");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO system_settings (setting_key, setting_value, setting_type) VALUES
+            ('emergent_llm_enabled', 'true', 'boolean')");
+
+        // Insert default settings for new users
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO default_settings (setting_key, free_credits, language) VALUES ('new_user_defaults', 100, 'en')");
 
@@ -550,5 +583,10 @@ public class MySqlDbContext : IDbContext
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO free_ai_providers (id, name, provider, api_key, model, is_enabled, priority, created_at, updated_at) VALUES
             ('ollama', 'Local Ollama (Free)', 'ollama', '', 'qwen2.5-coder:1.5b', FALSE, 5, NOW(), NOW())");
+
+        // Insert default admin user (password: admin123)
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO users (id, email, name, password_hash, role, credits, plan, tos_accepted, tos_accepted_at, tos_version, created_at) VALUES
+            ('admin-default', 'admin@littlehelper.ai', 'System Admin', '$2a$11$K8FHKFt1Y0kzKXCVpPGWoOjPF8Gw8QJQzXHnDrxXxJkCRvYJKMIwK', 'admin', 999999, 'enterprise', TRUE, NOW(), '1.0', NOW())");
     }
 }
