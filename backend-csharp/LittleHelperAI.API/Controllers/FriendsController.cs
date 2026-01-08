@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using LittleHelperAI.Data;
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace LittleHelperAI.API.Controllers;
 
@@ -13,6 +14,8 @@ public class FriendsController : ControllerBase
 {
     private readonly IDbContext _db;
     private readonly ILogger<FriendsController> _logger;
+    private const int MAX_MESSAGE_LENGTH = 5000;
+    private const int MAX_FRIENDS_PER_PAGE = 50;
 
     public FriendsController(IDbContext db, ILogger<FriendsController> logger)
     {
@@ -20,31 +23,55 @@ public class FriendsController : ControllerBase
         _logger = logger;
     }
 
-    // Get friends list
+    // Get friends list with pagination
     [HttpGet]
-    public async Task<ActionResult> GetFriends()
+    public async Task<ActionResult> GetFriends([FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
         var userId = User.FindFirst("user_id")?.Value;
+        limit = Math.Min(limit, MAX_FRIENDS_PER_PAGE);
+        var offset = (page - 1) * limit;
         
         var friends = await _db.QueryAsync<dynamic>(@"
-            SELECT f.*, u.email, u.display_name, u.role
+            SELECT f.id, f.friend_user_id, f.created_at,
+                   u.email, 
+                   COALESCE(u.display_name, u.name, u.email) as display_name, 
+                   u.role
             FROM friends f
             JOIN users u ON u.id = f.friend_user_id
             WHERE f.user_id = @UserId
-            ORDER BY u.display_name", new { UserId = userId });
+            ORDER BY COALESCE(u.display_name, u.name, u.email)
+            LIMIT @Limit OFFSET @Offset", 
+            new { UserId = userId, Limit = limit, Offset = offset });
 
-        return Ok(friends);
+        var total = await _db.QueryFirstOrDefaultAsync<int>(
+            "SELECT COUNT(*) FROM friends WHERE user_id = @UserId",
+            new { UserId = userId });
+
+        return Ok(new { 
+            friends = friends,
+            pagination = new { page, limit, total, pages = (int)Math.Ceiling(total / (double)limit) }
+        });
     }
 
-    // Send friend request
+    // Send friend request with rate limiting
     [HttpPost("request")]
     public async Task<ActionResult> SendFriendRequest([FromBody] FriendRequestDto dto)
     {
         var userId = User.FindFirst("user_id")?.Value;
 
+        // Rate limit: max 10 requests per hour
+        var recentRequests = await _db.QueryFirstOrDefaultAsync<int>(@"
+            SELECT COUNT(*) FROM friend_requests 
+            WHERE sender_id = @UserId AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)",
+            new { UserId = userId });
+
+        if (recentRequests >= 10)
+            return StatusCode(429, new { detail = "Too many friend requests. Please wait before sending more." });
+
         // Find user by email
-        var targetUser = await _db.QueryFirstOrDefaultAsync<dynamic>(
-            "SELECT id, email, display_name FROM users WHERE email = @Email",
+        var targetUser = await _db.QueryFirstOrDefaultAsync<dynamic>(@"
+            SELECT id, email, COALESCE(display_name, name, email) as display_name 
+            FROM users WHERE email = @Email",
             new { Email = dto.Email });
 
         if (targetUser == null)
@@ -99,14 +126,18 @@ public class FriendsController : ControllerBase
         var userId = User.FindFirst("user_id")?.Value;
 
         var incoming = await _db.QueryAsync<dynamic>(@"
-            SELECT fr.*, u.email as sender_email, u.display_name as sender_name
+            SELECT fr.*, 
+                   u.email as sender_email, 
+                   COALESCE(u.display_name, u.name, u.email) as sender_name
             FROM friend_requests fr
             JOIN users u ON u.id = fr.sender_id
             WHERE fr.receiver_id = @UserId AND fr.status = 'pending'
             ORDER BY fr.created_at DESC", new { UserId = userId });
 
         var outgoing = await _db.QueryAsync<dynamic>(@"
-            SELECT fr.*, u.email as receiver_email, u.display_name as receiver_name
+            SELECT fr.*, 
+                   u.email as receiver_email, 
+                   COALESCE(u.display_name, u.name, u.email) as receiver_name
             FROM friend_requests fr
             JOIN users u ON u.id = fr.receiver_id
             WHERE fr.sender_id = @UserId AND fr.status = 'pending'
@@ -167,7 +198,7 @@ public class FriendsController : ControllerBase
             return Ok(new { message = "User blocked" });
         }
 
-        return BadRequest(new { detail = "Invalid action" });
+        return BadRequest(new { detail = "Invalid action. Use: accept, deny, or block" });
     }
 
     // Remove friend
@@ -176,23 +207,24 @@ public class FriendsController : ControllerBase
     {
         var userId = User.FindFirst("user_id")?.Value;
 
-        await _db.ExecuteAsync(@"
+        var deleted = await _db.ExecuteAsync(@"
             DELETE FROM friends WHERE 
             (user_id = @UserId AND friend_user_id = @FriendId) OR
             (user_id = @FriendId AND friend_user_id = @UserId)",
             new { UserId = userId, FriendId = friendUserId });
 
-        // Send system message
-        await SendSystemMessage(userId, friendUserId, "You are no longer friends.");
+        if (deleted == 0)
+            return NotFound(new { detail = "Friendship not found" });
 
         return Ok(new { message = "Friend removed" });
     }
 
-    // Get DM conversation
+    // Get DM conversation - fixed query order
     [HttpGet("dm/{friendUserId}")]
-    public async Task<ActionResult> GetDirectMessages(string friendUserId, [FromQuery] int limit = 50)
+    public async Task<ActionResult> GetDirectMessages(string friendUserId, [FromQuery] int limit = 50, [FromQuery] string? before = null)
     {
         var userId = User.FindFirst("user_id")?.Value;
+        limit = Math.Min(limit, 100);
 
         // Verify friendship
         var isFriend = await _db.QueryFirstOrDefaultAsync<dynamic>(
@@ -202,17 +234,27 @@ public class FriendsController : ControllerBase
         if (isFriend == null)
             return BadRequest(new { detail = "You can only message friends" });
 
-        var messages = await _db.QueryAsync<dynamic>(@"
-            SELECT dm.*, 
-                   s.display_name as sender_name, s.email as sender_email,
-                   r.display_name as receiver_name, r.email as receiver_email
-            FROM direct_messages dm
-            JOIN users s ON s.id = dm.sender_id
-            JOIN users r ON r.id = dm.receiver_id
-            WHERE (dm.sender_id = @UserId AND dm.receiver_id = @FriendId)
-               OR (dm.sender_id = @FriendId AND dm.receiver_id = @UserId)
-            ORDER BY dm.created_at DESC
-            LIMIT @Limit", new { UserId = userId, FriendId = friendUserId, Limit = limit });
+        // Get messages in correct order (oldest first for display)
+        var sql = @"
+            SELECT * FROM (
+                SELECT dm.id, dm.sender_id, dm.receiver_id, dm.message, dm.message_type, 
+                       dm.is_read, dm.created_at,
+                       s.email as sender_email,
+                       COALESCE(s.display_name, s.name, s.email) as sender_name,
+                       r.email as receiver_email,
+                       COALESCE(r.display_name, r.name, r.email) as receiver_name
+                FROM direct_messages dm
+                JOIN users s ON s.id = dm.sender_id
+                JOIN users r ON r.id = dm.receiver_id
+                WHERE (dm.sender_id = @UserId AND dm.receiver_id = @FriendId)
+                   OR (dm.sender_id = @FriendId AND dm.receiver_id = @UserId)
+                " + (before != null ? "AND dm.created_at < @Before " : "") + @"
+                ORDER BY dm.created_at DESC
+                LIMIT @Limit
+            ) sub ORDER BY created_at ASC";
+
+        var messages = await _db.QueryAsync<dynamic>(sql, 
+            new { UserId = userId, FriendId = friendUserId, Limit = limit, Before = before });
 
         // Mark messages as read
         await _db.ExecuteAsync(@"
@@ -220,14 +262,21 @@ public class FriendsController : ControllerBase
             WHERE receiver_id = @UserId AND sender_id = @FriendId AND is_read = FALSE",
             new { UserId = userId, FriendId = friendUserId });
 
-        return Ok(messages.Reverse());
+        return Ok(messages);
     }
 
-    // Send DM
+    // Send DM with validation
     [HttpPost("dm/{friendUserId}")]
     public async Task<ActionResult> SendDirectMessage(string friendUserId, [FromBody] SendMessageDto dto)
     {
         var userId = User.FindFirst("user_id")?.Value;
+
+        // Validate message
+        if (string.IsNullOrWhiteSpace(dto.Message))
+            return BadRequest(new { detail = "Message cannot be empty" });
+
+        if (dto.Message.Length > MAX_MESSAGE_LENGTH)
+            return BadRequest(new { detail = $"Message too long. Maximum {MAX_MESSAGE_LENGTH} characters." });
 
         // Verify friendship
         var isFriend = await _db.QueryFirstOrDefaultAsync<dynamic>(
@@ -238,15 +287,17 @@ public class FriendsController : ControllerBase
             return BadRequest(new { detail = "You can only message friends" });
 
         var messageId = Guid.NewGuid().ToString();
+        var createdAt = DateTime.UtcNow;
+        
         await _db.ExecuteAsync(@"
             INSERT INTO direct_messages (id, sender_id, receiver_id, message, message_type, created_at)
-            VALUES (@Id, @SenderId, @ReceiverId, @Message, 'text', NOW())",
-            new { Id = messageId, SenderId = userId, ReceiverId = friendUserId, Message = dto.Message });
+            VALUES (@Id, @SenderId, @ReceiverId, @Message, 'text', @CreatedAt)",
+            new { Id = messageId, SenderId = userId, ReceiverId = friendUserId, Message = dto.Message.Trim(), CreatedAt = createdAt });
 
         return Ok(new { 
             id = messageId, 
-            message = dto.Message, 
-            sent_at = DateTime.UtcNow 
+            message = dto.Message.Trim(), 
+            sent_at = createdAt 
         });
     }
 
@@ -262,9 +313,10 @@ public class FriendsController : ControllerBase
             WHERE receiver_id = @UserId AND is_read = FALSE
             GROUP BY sender_id", new { UserId = userId });
 
-        var total = unread.Sum(u => (int)u.count);
+        var unreadList = unread.ToList();
+        var total = unreadList.Sum(u => (int)(long)u.count);
 
-        return Ok(new { total, by_user = unread });
+        return Ok(new { total, by_user = unreadList });
     }
 
     private async Task SendSystemMessage(string senderId, string receiverId, string message)
