@@ -103,6 +103,9 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ICreditService, CreditService>();
 builder.Services.AddScoped<IJobOrchestrationService, JobOrchestrationService>();
 
+// Register Collaboration Service (singleton for WebSocket state)
+builder.Services.AddSingleton<CollaborationService>();
+
 // Register Agents
 builder.Services.AddScoped<IAgentRegistry, AgentRegistry>();
 builder.Services.AddScoped<PlannerAgent>();
