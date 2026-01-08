@@ -407,14 +407,16 @@ export function WaveDefenseGame({ onRetryConnection }) {
             osc.start();
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + s.dur);
             osc.stop(ctx.currentTime + s.dur);
-        } catch(e) {}
+        } catch(e) {
+            // Audio not supported, silently ignore
+        }
     }, [soundEnabled]);
 
     // Calculate derived stats
-    const getPlayerDamage = () => 20 + upgrades.playerDamage * 5;
-    const getPlayerFireRate = () => Math.max(150, 400 - upgrades.playerReload * 30);
-    const getPlayerArmor = () => upgrades.playerArmor * 2;
-    const getTurretDamage = () => upgrades.baseTurret * 15;
+    const getPlayerDamage = useCallback(() => 20 + upgrades.playerDamage * 5, [upgrades.playerDamage]);
+    const getPlayerFireRate = useCallback(() => Math.max(150, 400 - upgrades.playerReload * 30), [upgrades.playerReload]);
+    const getPlayerArmor = useCallback(() => upgrades.playerArmor * 2, [upgrades.playerArmor]);
+    const getTurretDamage = useCallback(() => upgrades.baseTurret * 15, [upgrades.baseTurret]);
     const getBaseRegen = () => upgrades.baseRegen * 2;
 
     // Start new game
