@@ -122,6 +122,12 @@ builder.Services.AddHostedService<JobWorkerService>();
 
 var app = builder.Build();
 
+// Enable WebSockets for real-time collaboration
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(120)
+});
+
 // Configure pipeline
 if (app.Environment.IsDevelopment())
 {
