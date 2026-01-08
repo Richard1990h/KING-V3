@@ -708,16 +708,17 @@ export default function Workspace() {
                 </div>
                 
                 <div className="flex items-center gap-1 sm:gap-2">
+                    {/* Mobile: icon only, Desktop: icon + text */}
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={buildProject}
                         disabled={building}
-                        className="border-white/10"
+                        className="border-white/10 px-2 sm:px-3"
                         data-testid="build-btn"
                     >
                         {building ? <RefreshCw size={16} className="animate-spin" /> : <Hammer size={16} />}
-                        <span className="ml-2">{t('workspace_build', 'Build')}</span>
+                        <span className="ml-2 hidden sm:inline">{t('workspace_build', 'Build')}</span>
                     </Button>
                     
                     <Button
@@ -725,11 +726,11 @@ export default function Workspace() {
                         size="sm"
                         onClick={runProject}
                         disabled={running}
-                        className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+                        className="border-green-500/50 text-green-400 hover:bg-green-500/10 px-2 sm:px-3"
                         data-testid="run-btn"
                     >
                         {running ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} />}
-                        <span className="ml-2">{t('workspace_run', 'Run')}</span>
+                        <span className="ml-2 hidden sm:inline">{t('workspace_run', 'Run')}</span>
                     </Button>
                     
                     <Button
@@ -737,22 +738,22 @@ export default function Workspace() {
                         size="sm"
                         onClick={saveFile}
                         disabled={!hasChanges || saving}
-                        className="border-white/10"
+                        className="border-white/10 px-2 sm:px-3"
                         data-testid="save-btn"
                     >
                         {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
-                        <span className="ml-2">{t('workspace_save', 'Save')}</span>
+                        <span className="ml-2 hidden sm:inline">{t('workspace_save', 'Save')}</span>
                     </Button>
                     
-                    <Button variant="outline" size="sm" className="border-white/10" data-testid="export-btn" onClick={exportProject}>
+                    <Button variant="outline" size="sm" className="border-white/10 px-2 sm:px-3 hidden md:flex" data-testid="export-btn" onClick={exportProject}>
                         <Download size={16} />
-                        <span className="ml-2">{t('common_export', 'Export')}</span>
+                        <span className="ml-2 hidden lg:inline">{t('common_export', 'Export')}</span>
                     </Button>
                     
                     <Button 
                         variant="outline" 
                         size="sm" 
-                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10" 
+                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 px-2 sm:px-3 hidden lg:flex" 
                         data-testid="save-to-drive-btn"
                         onClick={async () => {
                             try {
@@ -768,10 +769,10 @@ export default function Workspace() {
                         }}
                     >
                         <Cloud size={16} />
-                        <span className="ml-2">Save to Drive</span>
+                        <span className="ml-2 hidden xl:inline">Save to Drive</span>
                     </Button>
                     
-                    <div className="ml-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30">
+                    <div className="ml-2 sm:ml-4 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30">
                         <Zap size={16} className="text-fuchsia-400" />
                         <span className="text-fuchsia-300 font-medium">{formatCredits(user?.credits || 0)}</span>
                         <span className="text-gray-500">{t('nav_credits', 'credits').toLowerCase()}</span>
