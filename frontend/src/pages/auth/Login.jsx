@@ -197,8 +197,31 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [showTOSModal, setShowTOSModal] = useState(false);
     const [pendingUser, setPendingUser] = useState(null);
+    const [backendDown, setBackendDown] = useState(false);
+    const [showGame, setShowGame] = useState(false);
+    const [announcement, setAnnouncement] = useState(null);
     const { login, logout } = useAuth();
     const navigate = useNavigate();
+
+    // Load announcement on mount
+    useEffect(() => {
+        loadAnnouncement();
+    }, []);
+
+    const loadAnnouncement = async () => {
+        try {
+            const res = await siteSettingsAPI.getPublic();
+            if (res.data?.announcement_enabled && res.data?.announcement_message) {
+                setAnnouncement(res.data);
+            }
+            setBackendDown(false);
+        } catch (err) {
+            // If we can't reach the server, that's okay - we'll show the game option
+            if (err.message?.includes('Network') || err.response?.status >= 500 || err.code === 'ERR_NETWORK') {
+                setBackendDown(true);
+            }
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -207,6 +230,7 @@ export default function Login() {
         
         try {
             const userData = await login(email, password);
+            setBackendDown(false);
             
             // Check if user needs to accept TOS
             if (userData && userData.tos_accepted === false) {
@@ -216,10 +240,22 @@ export default function Login() {
                 navigate('/dashboard');
             }
         } catch (err) {
-            setError(err.response?.data?.detail || 'Login failed. Please try again.');
+            const errorMsg = err.response?.data?.detail || err.message || 'Login failed. Please try again.';
+            setError(errorMsg);
+            
+            // Check if backend is down
+            if (errorMsg.includes('Backend unavailable') || errorMsg.includes('connection') || err.code === 'ERR_NETWORK') {
+                setBackendDown(true);
+            }
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleRetryConnection = async () => {
+        setShowGame(false);
+        setError('');
+        await loadAnnouncement();
     };
 
     const handleTOSAccept = () => {
@@ -232,6 +268,53 @@ export default function Login() {
         logout();
         setError('You must accept the Terms of Service to use LittleHelper AI');
     };
+
+    // Announcement type styles
+    const announcementStyles = {
+        info: 'bg-blue-500/10 border-blue-500/30 text-blue-300',
+        warning: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
+        success: 'bg-green-500/10 border-green-500/30 text-green-300',
+        error: 'bg-red-500/10 border-red-500/30 text-red-300'
+    };
+
+    const announcementIcons = {
+        info: Info,
+        warning: AlertTriangle,
+        success: Check,
+        error: AlertCircle
+    };
+
+    // Show game when backend is down and user wants to play
+    if (showGame) {
+        return (
+            <div className="min-h-screen bg-[#030712] grid-bg flex flex-col items-center justify-center p-4">
+                <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl" />
+                    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+                </div>
+                
+                <div className="relative z-10 w-full max-w-2xl">
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-cyan-500 flex items-center justify-center">
+                            <Zap className="w-6 h-6 text-white" />
+                        </div>
+                        <span className="text-2xl font-bold text-white font-outfit">LittleHelper AI</span>
+                    </div>
+                    
+                    <MiniShooterGame onRetryConnection={handleRetryConnection} />
+                    
+                    <div className="mt-4 text-center">
+                        <button 
+                            onClick={() => setShowGame(false)}
+                            className="text-gray-400 hover:text-white text-sm transition-colors"
+                        >
+                            ← Back to Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#030712] grid-bg flex items-center justify-center p-4">
