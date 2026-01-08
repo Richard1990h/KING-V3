@@ -278,7 +278,10 @@ export const profileAPI = {
     changePassword: (currentPassword, newPassword) => api.put('/user/password', {
         current_password: currentPassword,
         new_password: newPassword
-    })
+    }),
+    // Google Drive integration
+    getGoogleDriveConfig: () => api.get('/user/google-drive'),
+    saveGoogleDriveConfig: (config) => api.put('/user/google-drive', config)
 };
 
 // Credit Packages API (add-ons)
