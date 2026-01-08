@@ -153,6 +153,11 @@ public class SystemController : ControllerBase
             var conversationId = request.ConversationId ?? Guid.NewGuid().ToString();
             var timestamp = DateTime.UtcNow.ToString("o");
             
+            // Save conversation to database
+            var userId = User.FindFirst("user_id")?.Value ?? "anonymous";
+            await SaveChatMessage(userId, conversationId, "user", request.Message, null);
+            await SaveChatMessage(userId, conversationId, "assistant", response.Content ?? "", response.Provider);
+            
             return Ok(new
             {
                 conversation_id = conversationId,
@@ -176,6 +181,142 @@ public class SystemController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { detail = ex.Message });
+        }
+    }
+
+    // Get user conversations list
+    [HttpGet("conversations")]
+    [Authorize]
+    public async Task<ActionResult> GetConversations()
+    {
+        try
+        {
+            var userId = User.FindFirst("user_id")?.Value ?? "";
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new { detail = "User not authenticated" });
+            }
+
+            var connectionString = _config.GetConnectionString("DefaultConnection");
+            using var conn = new MySqlConnector.MySqlConnection(connectionString);
+            await conn.OpenAsync();
+
+            var sql = @"
+                SELECT DISTINCT conversation_id, 
+                       MAX(conversation_title) as title,
+                       MIN(timestamp) as created_at,
+                       MAX(timestamp) as last_message_at,
+                       COUNT(*) as message_count
+                FROM chat_history 
+                WHERE user_id = @UserId 
+                  AND conversation_id IS NOT NULL 
+                  AND deleted_by_user = 0
+                  AND project_id IS NULL
+                GROUP BY conversation_id
+                ORDER BY MAX(timestamp) DESC
+                LIMIT 50";
+
+            using var cmd = new MySqlConnector.MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+
+            var conversations = new List<object>();
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                conversations.Add(new
+                {
+                    id = reader["conversation_id"]?.ToString(),
+                    title = reader["title"]?.ToString() ?? "New Conversation",
+                    created_at = reader["created_at"],
+                    last_message_at = reader["last_message_at"],
+                    message_count = Convert.ToInt32(reader["message_count"])
+                });
+            }
+
+            return Ok(conversations);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { detail = ex.Message });
+        }
+    }
+
+    // Get messages for a specific conversation
+    [HttpGet("conversations/{conversationId}")]
+    [Authorize]
+    public async Task<ActionResult> GetConversationMessages(string conversationId)
+    {
+        try
+        {
+            var userId = User.FindFirst("user_id")?.Value ?? "";
+            
+            var connectionString = _config.GetConnectionString("DefaultConnection");
+            using var conn = new MySqlConnector.MySqlConnection(connectionString);
+            await conn.OpenAsync();
+
+            var sql = @"
+                SELECT id, role, content, agent_id, provider, model, tokens_used, timestamp
+                FROM chat_history 
+                WHERE user_id = @UserId 
+                  AND conversation_id = @ConversationId 
+                  AND deleted_by_user = 0
+                ORDER BY timestamp ASC";
+
+            using var cmd = new MySqlConnector.MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@ConversationId", conversationId);
+
+            var messages = new List<object>();
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                messages.Add(new
+                {
+                    id = reader["id"]?.ToString(),
+                    role = reader["role"]?.ToString(),
+                    content = reader["content"]?.ToString(),
+                    agent = reader["agent_id"]?.ToString(),
+                    provider = reader["provider"]?.ToString(),
+                    model = reader["model"]?.ToString(),
+                    tokens_used = reader["tokens_used"] != DBNull.Value ? Convert.ToInt32(reader["tokens_used"]) : 0,
+                    timestamp = reader["timestamp"]
+                });
+            }
+
+            return Ok(messages);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { detail = ex.Message });
+        }
+    }
+
+    // Helper method to save chat messages
+    private async Task SaveChatMessage(string userId, string conversationId, string role, string content, string? provider)
+    {
+        try
+        {
+            var connectionString = _config.GetConnectionString("DefaultConnection");
+            using var conn = new MySqlConnector.MySqlConnection(connectionString);
+            await conn.OpenAsync();
+
+            var sql = @"INSERT INTO chat_history (id, user_id, conversation_id, role, content, provider, timestamp) 
+                        VALUES (@Id, @UserId, @ConversationId, @Role, @Content, @Provider, @Timestamp)";
+
+            using var cmd = new MySqlConnector.MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Id", Guid.NewGuid().ToString());
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@ConversationId", conversationId);
+            cmd.Parameters.AddWithValue("@Role", role);
+            cmd.Parameters.AddWithValue("@Content", content);
+            cmd.Parameters.AddWithValue("@Provider", provider ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@Timestamp", DateTime.UtcNow);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving chat message: {ex.Message}");
         }
     }
 
