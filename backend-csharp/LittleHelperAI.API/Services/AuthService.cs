@@ -488,6 +488,29 @@ public class AuthService : IAuthService
         _logger.LogInformation("User {UserId} Google Drive config updated. Connected: {IsConnected}", userId, isConnected);
     }
 
+    // ==================== USER VISIBILITY (ADMIN APPEAR OFFLINE) ====================
+    
+    public async Task<object> GetUserVisibilityAsync(string userId)
+    {
+        var user = await _db.QueryFirstOrDefaultAsync<User>(
+            "SELECT appear_offline, last_login_at FROM users WHERE id = @Id",
+            new { Id = userId });
+        
+        return new {
+            appear_offline = user?.AppearOffline ?? false,
+            last_login_at = user?.LastLoginAt?.ToString("o")
+        };
+    }
+
+    public async Task UpdateUserVisibilityAsync(string userId, bool appearOffline)
+    {
+        await _db.ExecuteAsync(
+            "UPDATE users SET appear_offline = @AppearOffline WHERE id = @Id",
+            new { AppearOffline = appearOffline, Id = userId });
+        
+        _logger.LogInformation("User {UserId} visibility updated. Appear Offline: {AppearOffline}", userId, appearOffline);
+    }
+
     private static UserResponse MapToUserResponse(User user) => new(
         user.Id,
         user.Email,
