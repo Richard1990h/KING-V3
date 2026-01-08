@@ -191,6 +191,18 @@ public class FriendsController : ControllerBase
                 (@Id2, @FriendId, @UserId, NOW())",
                 new { Id1 = friendId1, Id2 = friendId2, UserId = userId, FriendId = request.sender_id });
 
+            // Get accepter's name for notification
+            var accepterUser = await _db.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT COALESCE(display_name, name, email) as name FROM users WHERE id = @UserId",
+                new { UserId = userId });
+
+            // Send real-time notification to original sender
+            await _notificationService.NotifyFriendRequestAccepted(
+                (string)request.sender_id,
+                userId!,
+                (string)accepterUser.name
+            );
+
             // Send system message
             await SendSystemMessage(request.sender_id, userId, "Your friend request was accepted!");
 
