@@ -262,23 +262,32 @@ export default function Admin() {
         setSaving(true);
         try {
             const planData = {
-                ...planForm,
-                features: planForm.features.split('\n').filter(f => f.trim()),
-                price_monthly: parseFloat(planForm.price_monthly),
-                daily_credits: parseInt(planForm.daily_credits),
-                max_projects: parseInt(planForm.max_projects),
-                max_concurrent_workspaces: parseInt(planForm.max_concurrent_workspaces)
+                id: planForm.id,
+                name: planForm.name,
+                description: planForm.description || '',
+                priceMonthly: parseFloat(planForm.priceMonthly) || 0,
+                priceYearly: parseFloat(planForm.priceYearly) || 0,
+                dailyCredits: parseInt(planForm.dailyCredits) || 0,
+                maxConcurrentWorkspaces: parseInt(planForm.maxConcurrentWorkspaces) || 1,
+                allowsOwnApiKeys: planForm.allowsOwnApiKeys || false,
+                features: typeof planForm.features === 'string' 
+                    ? planForm.features.split('\n').filter(f => f.trim())
+                    : planForm.features || [],
+                sortOrder: parseInt(planForm.sortOrder) || 0
             };
 
             if (creatingPlan) {
-                await adminAPI.createPlan(planData);
+                await adminAPI.createSubscriptionPlan(planData);
             } else {
-                const { plan_id, ...updateData } = planData;
-                await adminAPI.updatePlan(editingPlan.plan_id, updateData);
+                await adminAPI.updateSubscriptionPlan(editingPlan.id, planData);
             }
             loadAllData();
             setEditingPlan(null);
             setCreatingPlan(false);
+            setPlanForm({
+                id: '', name: '', description: '', priceMonthly: 0, priceYearly: 0,
+                dailyCredits: 0, maxConcurrentWorkspaces: 1, allowsOwnApiKeys: false, features: '', sortOrder: 0
+            });
         } catch (error) {
             console.error('Failed to save plan:', error);
             alert(error.response?.data?.detail || 'Failed to save plan');
@@ -288,9 +297,9 @@ export default function Admin() {
     };
 
     const deletePlan = async (planId) => {
-        if (!window.confirm('Are you sure you want to deactivate this plan?')) return;
+        if (!window.confirm('Are you sure you want to delete this plan?')) return;
         try {
-            await adminAPI.deletePlan(planId);
+            await adminAPI.deleteSubscriptionPlan(planId);
             loadAllData();
         } catch (error) {
             console.error('Failed to delete plan:', error);
