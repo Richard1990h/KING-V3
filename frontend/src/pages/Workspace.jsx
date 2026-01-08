@@ -1380,7 +1380,7 @@ export default function Workspace() {
                                 </ScrollArea>
                                 
                                 {/* Progress bar */}
-                                {todoItems.length > 0 && (
+                                {Array.isArray(todoItems) && todoItems.length > 0 && (
                                     <div className="p-3 border-t border-white/10">
                                         <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                                             <span>Progress</span>
