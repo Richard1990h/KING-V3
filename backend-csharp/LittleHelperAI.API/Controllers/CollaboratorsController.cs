@@ -180,7 +180,7 @@ public class CollaboratorsController : ControllerBase
             "UPDATE projects SET credit_mode = @Mode WHERE id = @Id",
             new { Mode = dto.Mode, Id = projectId });
 
-        _logger.LogInformation("Credit mode set to {Mode} for project {ProjectId}", dto.Mode, projectId);
+        _logger.LogInformation("Credit mode set to {0} for project {1}", dto.Mode, projectId);
 
         return Ok(new { message = $"Credit mode set to {dto.Mode}", credit_mode = dto.Mode });
     }
