@@ -509,37 +509,37 @@ export default function Admin() {
                                                 <TableCell>
                                                     <div>
                                                         <p className="font-medium">{plan.name}</p>
-                                                        <p className="text-xs text-gray-400">{plan.plan_id}</p>
+                                                        <p className="text-xs text-gray-400">{plan.id}</p>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-1">
                                                         <DollarSign size={14} className="text-green-400" />
-                                                        <span>{plan.price_monthly}</span>
+                                                        <span>${plan.priceMonthly?.toFixed(2) || '0.00'}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-1">
                                                         <Zap size={14} className="text-fuchsia-400" />
-                                                        <span>{plan.daily_credits}</span>
+                                                        <span>{plan.dailyCredits || 0}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-1">
                                                         <Layers size={14} className="text-cyan-400" />
-                                                        <span>{plan.max_concurrent_workspaces || 1}</span>
+                                                        <span>{plan.maxConcurrentWorkspaces === -1 ? 'Unlimited' : (plan.maxConcurrentWorkspaces || 1)}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {plan.max_projects === -1 ? 'Unlimited' : plan.max_projects}
+                                                    {plan.maxProjects === -1 ? 'Unlimited' : (plan.maxProjects || 'Unlimited')}
                                                 </TableCell>
                                                 <TableCell>
                                                     <span className={`px-2 py-1 rounded text-xs ${
-                                                        plan.allows_own_api_keys 
+                                                        plan.allowsOwnApiKeys 
                                                             ? 'bg-green-500/20 text-green-400' 
                                                             : 'bg-gray-500/20 text-gray-400'
                                                     }`}>
-                                                        {plan.allows_own_api_keys ? 'Allowed' : 'No'}
+                                                        {plan.allowsOwnApiKeys ? 'Allowed' : 'No'}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
