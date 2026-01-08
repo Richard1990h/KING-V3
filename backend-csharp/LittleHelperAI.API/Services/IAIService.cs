@@ -1,6 +1,5 @@
-// AI Service Interface
+// AI Service Interface for API layer
 using LittleHelperAI.Data.Models;
-using LittleHelperAI.Agents;
 
 namespace LittleHelperAI.API.Services;
 
@@ -21,10 +20,6 @@ public interface IAIService
     
     // Agent Activity
     Task<List<AgentActivity>> GetAgentActivityAsync(int limit);
-    
-    // AI Execution (implements Agents.IAIService methods)
-    Task<AIResponse> GenerateAsync(string prompt, string? systemPrompt = null, int maxTokens = 4000);
-    IAsyncEnumerable<string> GenerateStreamingAsync(string prompt, string? systemPrompt = null);
 }
 
 public record AIHealthStatus(string Database, string LocalLlm, string Stripe, List<string>? AvailableModels);
