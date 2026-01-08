@@ -456,10 +456,10 @@ NOW());
 -- =====================================================
 -- INSERT DEFAULT ADMIN USER
 -- Email: admin@littlehelper.ai
--- Password: admin123 (BCrypt hashed)
+-- Password: admin123 (SHA256 hashed)
 -- =====================================================
 INSERT INTO `users` (`id`, `email`, `name`, `display_name`, `password_hash`, `role`, `credits`, `credits_enabled`, `plan`, `language`, `tos_accepted`, `tos_accepted_at`, `tos_version`, `created_at`) VALUES
-('admin-default', 'admin@littlehelper.ai', 'System Admin', 'Admin', '$2a$11$K8FHKFt1Y0kzKXCVpPGWoOjPF8Gw8QJQzXHnDrxXxJkCRvYJKMIwK', 'admin', 999999.0000, 1, 'enterprise', 'en', 1, NOW(), '1.0', NOW());
+('admin-default', 'admin@littlehelper.ai', 'System Admin', 'Admin', 'r9Nw+28uMjWOzYBdVDDR502p9PopmTzsduIyClt6VS4=', 'admin', 999999.0000, 1, 'enterprise', 'en', 1, NOW(), '1.0', NOW());
 
 -- Insert admin theme
 INSERT INTO `user_themes` (`user_id`, `primary_color`, `secondary_color`, `background_color`, `card_color`, `text_color`, `hover_color`, `credits_color`) VALUES
