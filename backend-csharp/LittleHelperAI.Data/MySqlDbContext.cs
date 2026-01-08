@@ -116,6 +116,9 @@ public class MySqlDbContext : IDbContext
         {
             if (_typeMappersRegistered) return;
             
+            // Register JSON type handler for List<string> columns
+            SqlMapper.AddTypeHandler(new JsonListTypeHandler());
+            
             // Register type mappers for all model types
             var modelTypes = typeof(LittleHelperAI.Data.Models.User).Assembly
                 .GetTypes()
