@@ -496,7 +496,7 @@ export default function Register() {
                         </Button>
 
                         <p className="text-xs text-gray-500 text-center">
-                            By clicking "Create Account", you will be asked to review and accept our Terms of Service
+                            By clicking &quot;Create Account&quot;, you will be asked to review and accept our Terms of Service
                         </p>
                     </form>
                     
