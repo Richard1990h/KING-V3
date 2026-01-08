@@ -128,7 +128,7 @@ export default function Admin() {
     const loadAllData = async () => {
         setLoading(true);
         try {
-            const [statsRes, usersRes, jobsRes, activityRes, knowledgeRes, healthRes, settingsRes, plansRes, providersRes, aiSettingsRes, defaultsRes] = await Promise.all([
+            const [statsRes, usersRes, jobsRes, activityRes, knowledgeRes, healthRes, settingsRes, plansRes, providersRes, aiSettingsRes, defaultsRes, packagesRes] = await Promise.all([
                 adminAPI.getStats(),
                 adminAPI.getUsers(),
                 adminAPI.getRunningJobs().catch(() => ({ data: [] })),
@@ -139,7 +139,8 @@ export default function Admin() {
                 adminAPI.getAllPlans().catch(() => ({ data: [] })),
                 adminAPI.getFreeAIProviders().catch(() => ({ data: [] })),
                 adminAPI.getAISettings().catch(() => ({ data: { emergent_llm_enabled: true } })),
-                adminAPI.getDefaults().catch(() => ({ data: {} }))
+                adminAPI.getDefaults().catch(() => ({ data: {} })),
+                adminAPI.getCreditPackages().catch(() => ({ data: [] }))
             ]);
             setStats(statsRes.data);
             setUsers(usersRes.data);
@@ -152,6 +153,7 @@ export default function Admin() {
             setFreeProviders(providersRes.data || []);
             setEmergentEnabled(aiSettingsRes.data?.emergent_llm_enabled ?? true);
             setDefaults(defaultsRes.data || { theme: {}, language: 'en', free_credits: 100 });
+            setCreditPackages(packagesRes.data || []);
             setCreditConfig({
                 chat: settingsRes.data?.credits_per_1k_tokens_chat || 0.5,
                 project: settingsRes.data?.credits_per_1k_tokens_project || 1.0
