@@ -147,14 +147,14 @@ public class MySqlDbContext : IDbContext
 
     public async Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
     {
-        using var connection = CreateConnection();
+        using var connection = new MySqlConnection(_connectionString);
         await connection.OpenAsync();
         return await connection.QueryAsync<T>(sql, param);
     }
 
     public async Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? param = null)
     {
-        using var connection = CreateConnection();
+        using var connection = new MySqlConnection(_connectionString);
         await connection.OpenAsync();
         return await connection.QueryFirstOrDefaultAsync<T>(sql, param);
     }
