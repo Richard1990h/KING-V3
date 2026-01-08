@@ -186,15 +186,22 @@ public class SystemController : ControllerBase
     {
         try
         {
+            // Support both 'prompt' and 'request' field names from frontend
+            var userRequest = request.Prompt ?? request.Request ?? "";
+            if (string.IsNullOrWhiteSpace(userRequest))
+            {
+                return BadRequest(new { detail = "No prompt or request provided" });
+            }
+
             var systemPrompt = @"You are a software architect AI. Given a user's request and existing project files, create a detailed build plan.
-Return a JSON object with this exact structure:
+Return ONLY a valid JSON object with this exact structure (no markdown, no code blocks, just raw JSON):
 {
     ""summary"": ""Brief summary of what will be built"",
     ""tasks"": [
         {
             ""id"": ""task-1"",
             ""title"": ""Task title"",
-            ""description"": ""What this task does"",
+            ""description"": ""Detailed description of what code to write and in which file"",
             ""agent"": ""developer"",
             ""estimatedCredits"": 5.0,
             ""dependencies"": []
@@ -202,31 +209,53 @@ Return a JSON object with this exact structure:
     ],
     ""totalEstimatedCredits"": 10.0
 }
-Be concise and practical. Focus on the actual implementation steps.";
+Rules:
+1. Each task should describe ONE file to create or modify
+2. Include the filename in the description (e.g., 'Create main.py with...')
+3. Be specific about what code goes in each file
+4. Return ONLY the JSON, no explanations before or after";
 
-            var userPrompt = $"User Request: {request.Prompt}\n\nExisting Files: {string.Join(", ", request.ExistingFiles ?? Array.Empty<string>())}\n\nProject Language: {request.Language ?? "Python"}";
+            var userPrompt = $"User Request: {userRequest}\n\nProject Language: {request.Language ?? "Python"}";
             
             var response = await _aiService.GenerateAsync(userPrompt, systemPrompt, 2000);
             
-            // Try to parse as JSON, otherwise wrap in a simple structure
+            // Try to extract JSON from response (in case LLM wrapped it)
+            var content = response.Content ?? "{}";
+            
+            // Remove markdown code blocks if present
+            if (content.Contains("```json"))
+            {
+                var start = content.IndexOf("```json") + 7;
+                var end = content.LastIndexOf("```");
+                if (end > start) content = content.Substring(start, end - start);
+            }
+            else if (content.Contains("```"))
+            {
+                var start = content.IndexOf("```") + 3;
+                var end = content.LastIndexOf("```");
+                if (end > start) content = content.Substring(start, end - start);
+            }
+            content = content.Trim();
+            
+            // Try to parse as JSON
             try
             {
-                var json = System.Text.Json.JsonSerializer.Deserialize<object>(response.Content ?? "{}");
+                var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(content);
                 return Ok(json);
             }
             catch
             {
-                // If not valid JSON, return a simple plan
+                // If not valid JSON, return a simple plan based on the user request
                 return Ok(new
                 {
-                    summary = response.Content?.Substring(0, Math.Min(200, response.Content?.Length ?? 0)) ?? "Build plan generated",
+                    summary = $"Build: {userRequest.Substring(0, Math.Min(100, userRequest.Length))}",
                     tasks = new[]
                     {
                         new
                         {
                             id = "task-1",
                             title = "Implement requested feature",
-                            description = request.Prompt,
+                            description = userRequest,
                             agent = "developer",
                             estimatedCredits = 5.0,
                             dependencies = Array.Empty<string>()
