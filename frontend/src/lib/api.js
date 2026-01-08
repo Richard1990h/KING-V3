@@ -281,7 +281,10 @@ export const profileAPI = {
     }),
     // Google Drive integration
     getGoogleDriveConfig: () => api.get('/user/google-drive'),
-    saveGoogleDriveConfig: (config) => api.put('/user/google-drive', config)
+    saveGoogleDriveConfig: (config) => api.put('/user/google-drive', config),
+    // Visibility (admin appear offline feature)
+    getVisibility: () => api.get('/user/visibility'),
+    updateVisibility: (appearOffline) => api.put('/user/visibility', { appear_offline: appearOffline })
 };
 
 // Credit Packages API (add-ons)
