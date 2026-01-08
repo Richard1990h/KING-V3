@@ -138,7 +138,7 @@ export default function Admin() {
     const loadAllData = async () => {
         setLoading(true);
         try {
-            const [statsRes, usersRes, jobsRes, activityRes, knowledgeRes, healthRes, settingsRes, plansRes, providersRes, aiSettingsRes, defaultsRes, packagesRes] = await Promise.all([
+            const [statsRes, usersRes, jobsRes, activityRes, knowledgeRes, healthRes, settingsRes, plansRes, providersRes, aiSettingsRes, defaultsRes, packagesRes, siteSettingsRes] = await Promise.all([
                 adminAPI.getStats(),
                 adminAPI.getUsers(),
                 adminAPI.getRunningJobs().catch(() => ({ data: [] })),
@@ -150,7 +150,8 @@ export default function Admin() {
                 adminAPI.getFreeAIProviders().catch(() => ({ data: [] })),
                 adminAPI.getAISettings().catch(() => ({ data: { emergent_llm_enabled: true } })),
                 adminAPI.getDefaults().catch(() => ({ data: {} })),
-                adminAPI.getCreditPackages().catch(() => ({ data: [] }))
+                adminAPI.getCreditPackages().catch(() => ({ data: [] })),
+                siteSettingsAPI.get().catch(() => ({ data: {} }))
             ]);
             setStats(statsRes.data);
             setUsers(usersRes.data);
@@ -168,6 +169,13 @@ export default function Admin() {
                 chat: settingsRes.data?.credits_per_1k_tokens_chat || 0.5,
                 project: settingsRes.data?.credits_per_1k_tokens_project || 1.0
             });
+            // Load site settings
+            if (siteSettingsRes.data) {
+                setSiteSettings(prev => ({
+                    ...prev,
+                    ...siteSettingsRes.data
+                }));
+            }
         } catch (error) {
             console.error('Failed to load admin data:', error);
         } finally {
