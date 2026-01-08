@@ -509,12 +509,13 @@ export default function Workspace() {
     };
 
     const handleStartBuilding = async () => {
-        if (todoItems.length === 0) return;
+        const currentTodos = Array.isArray(todoItems) ? todoItems : [];
+        if (currentTodos.length === 0) return;
         
         setAiWorkingPhase('developing');
         setActiveAgentId('developer');
         
-        setChatMessages(prev => [...prev, { 
+        setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
             role: 'assistant', 
             agent: 'developer',
             content: '🔨 Starting to build based on the approved plan...', 
@@ -525,17 +526,17 @@ export default function Workspace() {
         
         try {
             // Execute each task
-            for (let i = 0; i < todoItems.length; i++) {
-                const task = todoItems[i];
+            for (let i = 0; i < currentTodos.length; i++) {
+                const task = currentTodos[i];
                 if (task.completed) continue;
                 
                 // Set active agent for glowing effect
-                setActiveAgentId(task.agent);
+                setActiveAgentId(task.agent || 'developer');
                 
                 // Update UI to show current task
-                setChatMessages(prev => [...prev, { 
+                setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                     role: 'assistant', 
-                    agent: task.agent,
+                    agent: task.agent || 'developer',
                     content: `⚙️ Working on: ${task.task}`, 
                     timestamp: new Date().toISOString() 
                 }]);
@@ -544,17 +545,18 @@ export default function Workspace() {
                 const res = await api.post(`/ai/execute-task`, {
                     project_id: projectId,
                     task: task.task,
-                    agent: task.agent
+                    agent: task.agent || 'developer'
                 });
                 
                 // Track created files and save them to the database
-                if (res.data.files && res.data.files.length > 0) {
-                    for (const file of res.data.files) {
+                const resFiles = Array.isArray(res.data?.files) ? res.data.files : [];
+                if (resFiles.length > 0) {
+                    for (const file of resFiles) {
                         try {
                             // Create the file in the database
                             await filesAPI.create(projectId, {
                                 path: file.path,
-                                content: file.content
+                                content: file.content || ''
                             });
                             filesCreatedTotal.push(file);
                         } catch (fileErr) {
@@ -563,17 +565,17 @@ export default function Workspace() {
                     }
                     
                     // Show which files were created
-                    const fileNames = res.data.files.map(f => f.path).join(', ');
-                    setChatMessages(prev => [...prev, { 
+                    const fileNames = resFiles.map(f => f.path).join(', ');
+                    setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                         role: 'assistant', 
-                        agent: task.agent,
+                        agent: task.agent || 'developer',
                         content: `✅ Created file(s): ${fileNames}`, 
                         timestamp: new Date().toISOString() 
                     }]);
                 }
                 
                 // Mark task complete
-                setTodoItems(prev => prev.map(t => 
+                setTodoItems(prev => (Array.isArray(prev) ? prev : []).map(t => 
                     t.id === task.id ? { ...t, completed: true } : t
                 ));
             }
@@ -586,7 +588,7 @@ export default function Workspace() {
             
             // Final summary message
             const totalFiles = filesCreatedTotal.length;
-            setChatMessages(prev => [...prev, { 
+            setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                 role: 'assistant', 
                 agent: 'verifier',
                 content: `🎉 Build complete!\n\n📁 ${totalFiles} file(s) created:\n${filesCreatedTotal.map(f => `• ${f.path}`).join('\n')}\n\nCheck the Files panel to view and edit your code.`, 
@@ -601,7 +603,7 @@ export default function Workspace() {
             // Still refresh files in case some were created before error
             await loadFiles();
             
-            setChatMessages(prev => [...prev, { 
+            setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                 role: 'system', 
                 content: `Error during build: ${error.response?.data?.detail || error.message}`, 
                 timestamp: new Date().toISOString() 
