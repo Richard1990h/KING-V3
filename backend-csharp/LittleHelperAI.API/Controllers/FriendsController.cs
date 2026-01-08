@@ -83,7 +83,7 @@ public class FriendsController : ControllerBase
             VALUES (@Id, @SenderId, @ReceiverId, 'pending', NOW())",
             new { Id = requestId, SenderId = userId, ReceiverId = targetUser.id });
 
-        _logger.LogInformation("Friend request sent from {SenderId} to {ReceiverId}", userId, targetUser.id);
+        _logger.LogInformation("Friend request sent from {0} to {1}", userId, targetUser.id);
 
         return Ok(new { 
             message = "Friend request sent", 
