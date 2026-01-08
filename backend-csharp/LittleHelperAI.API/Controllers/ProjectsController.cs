@@ -197,3 +197,9 @@ public record FileResponse(string Id, string ProjectId, string Path, string Cont
 public record CreateTodoRequest(string Text, string Priority = "medium");
 public record UpdateTodoRequest(string? Text, bool? Completed, string? Priority);
 public record TodoResponse(string Id, string ProjectId, string Text, bool Completed, string Priority, string CreatedAt);
+public record SendChatRequest(
+    string Message, 
+    List<string>? AgentsEnabled = null, 
+    string? ConversationId = null, 
+    bool MultiAgentMode = false
+);
