@@ -342,10 +342,35 @@ export default function Register() {
                         <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6"
+                            className={`px-4 py-3 rounded-lg mb-6 ${
+                                error.includes('Backend unavailable') || error.includes('connection')
+                                    ? 'bg-amber-500/10 border border-amber-500/20'
+                                    : 'bg-red-500/10 border border-red-500/20'
+                            }`}
                             data-testid="register-error"
                         >
-                            {error}
+                            {error.includes('Backend unavailable') || error.includes('connection') ? (
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-amber-400">
+                                        <AlertTriangle size={18} />
+                                        <span className="font-medium">Service Temporarily Unavailable</span>
+                                    </div>
+                                    <p className="text-sm text-amber-300/80">
+                                        The server is currently starting up or undergoing maintenance. Please try again in a moment.
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => { setError(''); setLoading(false); }}
+                                        className="mt-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                                    >
+                                        Dismiss
+                                    </Button>
+                                </div>
+                            ) : (
+                                <span className="text-red-400">{error}</span>
+                            )}
                         </motion.div>
                     )}
                     
