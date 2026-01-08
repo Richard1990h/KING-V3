@@ -60,6 +60,9 @@ public class User
     
     [Column("last_login_at")]
     public DateTime? LastLoginAt { get; set; }
+    
+    [Column("appear_offline")]
+    public bool AppearOffline { get; set; } = false;
 }
 
 public class UserTheme
