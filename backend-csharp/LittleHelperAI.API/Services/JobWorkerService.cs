@@ -1,6 +1,8 @@
-// Background Job Worker Service
+// Background Job Worker Service - Updated to match interface
 using LittleHelperAI.Agents;
 using LittleHelperAI.Data;
+using LittleHelperAI.Data.Models;
+using LittleHelperAI.API.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
@@ -26,16 +28,17 @@ public class JobWorkerService : BackgroundService
             try
             {
                 using var scope = _serviceProvider.CreateScope();
-                var jobService = scope.ServiceProvider.GetRequiredService<IJobOrchestrationService>();
                 var db = scope.ServiceProvider.GetRequiredService<IDbContext>();
+                var agentRegistry = scope.ServiceProvider.GetRequiredService<IAgentRegistry>();
+                var creditService = scope.ServiceProvider.GetRequiredService<ICreditService>();
 
                 // Get approved jobs that need processing
-                var pendingJobs = await db.QueryAsync<LittleHelperAI.Data.Models.Job>(
+                var pendingJobs = await db.QueryAsync<Job>(
                     "SELECT * FROM jobs WHERE status = 'approved' ORDER BY created_at ASC LIMIT 5");
 
                 foreach (var job in pendingJobs)
                 {
-                    await ProcessJobAsync(scope.ServiceProvider, job, stoppingToken);
+                    await ProcessJobAsync(db, agentRegistry, creditService, job, stoppingToken);
                 }
             }
             catch (Exception ex)
@@ -47,55 +50,117 @@ public class JobWorkerService : BackgroundService
         }
     }
 
-    private async Task ProcessJobAsync(IServiceProvider services, LittleHelperAI.Data.Models.Job job, CancellationToken ct)
+    private async Task ProcessJobAsync(
+        IDbContext db,
+        IAgentRegistry agentRegistry,
+        ICreditService creditService,
+        Job job,
+        CancellationToken ct)
     {
         _logger.LogInformation("Processing job {JobId}", job.Id);
-
-        var jobService = services.GetRequiredService<IJobOrchestrationService>();
-        var agentRegistry = services.GetRequiredService<IAgentRegistry>();
 
         try
         {
             // Mark as in progress
-            await jobService.AdvanceJobAsync(job.Id);
+            await db.ExecuteAsync(
+                "UPDATE jobs SET status = 'in_progress', started_at = @Now, updated_at = @Now WHERE id = @JobId",
+                new { Now = DateTime.UtcNow, JobId = job.Id });
 
             // Get tasks from job
             var tasks = string.IsNullOrEmpty(job.Tasks)
-                ? new List<JobTask>()
-                : JsonSerializer.Deserialize<List<JobTask>>(job.Tasks) ?? new List<JobTask>();
+                ? new List<TaskItem>()
+                : JsonSerializer.Deserialize<List<TaskItem>>(job.Tasks) ?? new List<TaskItem>();
 
             // Process each task
-            for (var i = job.CurrentTaskIndex; i < tasks.Count && !ct.IsCancellationRequested; i++)
+            for (var i = Math.Max(0, job.CurrentTaskIndex); i < tasks.Count && !ct.IsCancellationRequested; i++)
             {
                 var task = tasks[i];
+                
+                // Update current task
+                await db.ExecuteAsync(
+                    "UPDATE jobs SET current_task_index = @Index, updated_at = @Now WHERE id = @JobId",
+                    new { Index = i, Now = DateTime.UtcNow, JobId = job.Id });
+
                 var agent = agentRegistry.GetAgent(task.AgentType);
 
                 if (agent != null)
                 {
-                    var result = await agent.ExecuteAsync(task.Description, null);
-                    task.Status = result.Success ? "completed" : "failed";
-                    task.Output = result.Content;
+                    try
+                    {
+                        var result = await agent.ExecuteAsync(task.Description, null);
+                        
+                        tasks[i] = task with {
+                            Status = result.Success ? "completed" : "failed",
+                            ActualTokens = result.TokensUsed,
+                            ActualCredits = result.TokensUsed * 0.001,
+                            Output = result.Content,
+                            FilesCreated = result.FilesCreated.Select(f => f.Path).ToList(),
+                            Error = result.Errors.FirstOrDefault()
+                        };
+
+                        // Deduct credits
+                        await creditService.DeductCreditsAsync(
+                            job.UserId,
+                            (decimal)tasks[i].ActualCredits,
+                            $"Job {job.Id}: {task.Title}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Task {TaskId} in job {JobId} failed", task.Id, job.Id);
+                        tasks[i] = task with {
+                            Status = "failed",
+                            Error = ex.Message
+                        };
+                    }
+                }
+                else
+                {
+                    tasks[i] = task with {
+                        Status = "skipped",
+                        Error = $"Agent type '{task.AgentType}' not found"
+                    };
                 }
 
-                await jobService.AdvanceJobAsync(job.Id);
+                // Update tasks
+                await db.ExecuteAsync(
+                    "UPDATE jobs SET tasks = @Tasks, updated_at = @Now WHERE id = @JobId",
+                    new { Tasks = JsonSerializer.Serialize(tasks), Now = DateTime.UtcNow, JobId = job.Id });
             }
 
-            // Mark as completed
-            await jobService.CompleteJobAsync(job.Id);
+            // Calculate final status
+            var allCompleted = tasks.All(t => t.Status == "completed");
+            var totalCreditsUsed = tasks.Sum(t => t.ActualCredits);
+
+            // Mark as completed or failed
+            await db.ExecuteAsync(@"
+                UPDATE jobs 
+                SET status = @Status,
+                    tasks = @Tasks,
+                    credits_used = @CreditsUsed,
+                    updated_at = @Now,
+                    completed_at = @Now
+                WHERE id = @JobId",
+                new { 
+                    Status = allCompleted ? "completed" : "completed_with_errors",
+                    Tasks = JsonSerializer.Serialize(tasks),
+                    CreditsUsed = totalCreditsUsed,
+                    Now = DateTime.UtcNow,
+                    JobId = job.Id 
+                });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Job {JobId} failed", job.Id);
-            await jobService.FailJobAsync(job.Id, ex.Message);
+            _logger.LogError(ex, "Job {JobId} failed completely", job.Id);
+            
+            await db.ExecuteAsync(@"
+                UPDATE jobs 
+                SET status = 'failed',
+                    error = @Error,
+                    error_count = error_count + 1,
+                    updated_at = @Now,
+                    completed_at = @Now
+                WHERE id = @JobId",
+                new { Error = ex.Message, Now = DateTime.UtcNow, JobId = job.Id });
         }
     }
-}
-
-public class JobTask
-{
-    public string Id { get; set; } = "";
-    public string AgentType { get; set; } = "";
-    public string Description { get; set; } = "";
-    public string Status { get; set; } = "pending";
-    public string? Output { get; set; }
 }
