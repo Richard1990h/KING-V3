@@ -888,13 +888,23 @@ export default function Workspace() {
                     <div className="flex-1 flex flex-col bg-[#030712]">
                         {selectedFile ? (
                             <>
-                                {/* File tab */}
-                                <div className="h-10 border-b border-white/10 flex items-center px-4">
+                                {/* File tab with Run button */}
+                                <div className="h-10 border-b border-white/10 flex items-center justify-between px-4">
                                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-t border-b-2 border-fuchsia-500">
                                         <FileCode size={14} className="text-fuchsia-400" />
                                         <span className="text-sm">{selectedFile.path}</span>
                                         {hasChanges && <span className="w-2 h-2 rounded-full bg-fuchsia-400" />}
                                     </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowCodeRunner(true)}
+                                        className="h-7 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                                        data-testid="run-code-btn"
+                                    >
+                                        <PlayCircle size={14} className="mr-1" />
+                                        Run Code
+                                    </Button>
                                 </div>
                                 
                                 {/* Editor */}
