@@ -120,15 +120,21 @@ builder.Services.AddScoped<DebuggerAgent>();
 builder.Services.AddScoped<VerifierAgent>();
 builder.Services.AddScoped<ErrorAnalyzerAgent>();
 
+// Register Notification Service (singleton for WebSocket management)
+builder.Services.AddSingleton<NotificationService>();
+
+// Register Site Settings Service with caching
+builder.Services.AddScoped<ISiteSettingsService, SiteSettingsService>();
+
 // Background Job Service (for multi-agent orchestration)
 builder.Services.AddHostedService<JobWorkerService>();
 
 var app = builder.Build();
 
-// Enable WebSockets for real-time collaboration
+// Enable WebSockets for real-time collaboration and notifications
 app.UseWebSockets(new WebSocketOptions
 {
-    KeepAliveInterval = TimeSpan.FromSeconds(120)
+    KeepAliveInterval = TimeSpan.FromSeconds(30)
 });
 
 // Configure pipeline
