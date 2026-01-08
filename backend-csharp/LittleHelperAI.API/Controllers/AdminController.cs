@@ -591,3 +591,9 @@ public record UpdateSubscriptionPlanRequest(
     bool? IsActive,
     int? SortOrder
 );
+
+public record GoogleDriveConfigRequest(
+    string? ClientId,
+    string? ClientSecret,
+    string? RedirectUri
+);
