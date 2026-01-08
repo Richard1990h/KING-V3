@@ -774,16 +774,16 @@ export default function Workspace() {
                     
                     <div className="ml-2 sm:ml-4 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30">
                         <Zap size={16} className="text-fuchsia-400" />
-                        <span className="text-fuchsia-300 font-medium">{formatCredits(user?.credits || 0)}</span>
-                        <span className="text-gray-500">{t('nav_credits', 'credits').toLowerCase()}</span>
+                        <span className="text-fuchsia-300 font-medium text-sm">{formatCredits(user?.credits || 0)}</span>
+                        <span className="text-gray-500 text-xs hidden sm:inline">{t('nav_credits', 'credits').toLowerCase()}</span>
                     </div>
                 </div>
             </header>
 
-            {/* Main workspace */}
-            <div className="flex-1 flex overflow-hidden">
-                {/* File tree */}
-                <div className="w-60 border-r border-white/10 bg-[#0B0F19] flex flex-col">
+            {/* Main workspace - Responsive Layout */}
+            <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
+                {/* File tree - Collapsible on mobile */}
+                <div className={`${selectedFile ? 'hidden md:flex' : 'flex'} w-full md:w-60 border-b md:border-b-0 md:border-r border-white/10 bg-[#0B0F19] flex-col max-h-[40vh] md:max-h-full`}>
                     <div className="h-10 flex items-center justify-between px-3 border-b border-white/10">
                         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t('workspace_files', 'FILES')}</span>
                         <div className="flex items-center gap-1">
