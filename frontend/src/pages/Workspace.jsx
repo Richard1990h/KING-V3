@@ -444,13 +444,13 @@ export default function Workspace() {
         try {
             // First, scan existing files for context
             const existingFilesRes = await filesAPI.getAll(projectId);
-            const existingFiles = existingFilesRes.data || [];
+            const existingFiles = Array.isArray(existingFilesRes.data) ? existingFilesRes.data : [];
             const fileContext = existingFiles.length > 0 
                 ? `Existing files: ${existingFiles.map(f => f.path).join(', ')}`
                 : 'No existing files';
             
             // Phase 1: Planner creates initial to-do list
-            setChatMessages(prev => [...prev, { 
+            setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                 role: 'assistant', 
                 agent: 'planner',
                 content: `Scanning project structure... ${existingFiles.length} file(s) found.\nAnalyzing your request and creating a build plan...`, 
@@ -463,23 +463,32 @@ export default function Workspace() {
                 agents: enabledAgents
             });
             
-            if (planRes.data.tasks) {
-                setTodoItems(planRes.data.tasks.map((task, i) => ({
+            // Defensive: ensure tasks is always an array
+            const tasks = Array.isArray(planRes.data?.tasks) ? planRes.data.tasks : [];
+            if (tasks.length > 0) {
+                setTodoItems(tasks.map((task, i) => ({
                     id: Date.now() + i,
-                    task: task.description,
+                    task: task.description || task.task || 'Task',
                     agent: task.agent || 'developer',
                     completed: false
                 })));
                 
                 // Show task summary in chat
-                const taskSummary = planRes.data.tasks.map((t, i) => 
-                    `${i + 1}. [${t.agent || 'developer'}] ${t.description}`
+                const taskSummary = tasks.map((t, i) => 
+                    `${i + 1}. [${t.agent || 'developer'}] ${t.description || t.task || 'Task'}`
                 ).join('\n');
                 
-                setChatMessages(prev => [...prev, { 
+                setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                     role: 'assistant', 
                     agent: 'planner',
                     content: `📋 Build plan created:\n\n${taskSummary}\n\nReview the To-Do tab, make any edits, then click "Approve & Build" to start.`, 
+                    timestamp: new Date().toISOString() 
+                }]);
+            } else {
+                setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
+                    role: 'assistant', 
+                    agent: 'planner',
+                    content: `Could not generate a build plan. Please try rephrasing your request.`, 
                     timestamp: new Date().toISOString() 
                 }]);
             }
@@ -491,7 +500,7 @@ export default function Workspace() {
             console.error('AI Building flow error:', error);
             setAiWorkingPhase(null);
             setActiveAgentId(null);
-            setChatMessages(prev => [...prev, { 
+            setChatMessages(prev => [...(Array.isArray(prev) ? prev : []), { 
                 role: 'system', 
                 content: `Error creating build plan: ${error.response?.data?.detail || error.message}`, 
                 timestamp: new Date().toISOString() 
