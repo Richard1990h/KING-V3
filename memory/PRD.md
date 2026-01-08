@@ -23,24 +23,35 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - [x] Admin Subscription Plans & Credit Packages CRUD
 - [x] CodeBlock Component (Notepad++ style with syntax highlighting)
 
-#### Real-time Collaboration (Backend Ready)
+#### Real-time Collaboration
 - [x] WebSocket service (`CollaborationService.cs`)
+- [x] `useCollaboration` React hook with cursor tracking
 - [x] Share link generation with 7-day expiry
 - [x] Project download as ZIP
-- [x] `useCollaboration` React hook
+- [x] CollaboratorAvatars and CollaboratorCursor components
 
-#### Friends System (Backend Ready)
-- [x] Send/accept/deny friend requests
+#### Friends & DM System
+- [x] Send/accept/deny friend requests API
 - [x] Friends list management
 - [x] Direct messages (1-to-1 chat)
-- [x] Unread message count
+- [x] Unread message count tracking
+- [x] FriendsSidebar component with defensive checks
 
-#### Frontend Features (January 8, 2026)
+#### Frontend (January 8, 2026)
 - [x] **Defensive Error Handling** - All `.map()` operations have null/undefined checks
-- [x] **CodeRunner Integration** - "Run Code" button in editor (HTML/CSS/JS, Python via Pyodide)
+- [x] **CodeRunner Integration** - "Run Code" button in editor
 - [x] **Save to Google Drive** - Button in workspace header
-- [x] **FriendsSidebar** - Integrated with defensive checks
-- [x] **Backend Unavailable Handling** - Graceful error messages when C# backend not running
+- [x] **FriendsSidebar** - Integrated with notification badge
+- [x] **useNotifications Hook** - WebSocket + polling for real-time DM/friend notifications
+- [x] **Mobile Responsiveness** - Workspace header, file tree, chat panel are mobile-friendly
+- [x] **Backend Unavailable Handling** - Graceful error messages
+
+#### Docker Configuration
+- [x] Improved Dockerfile with health checks and security
+- [x] docker-compose.yml with proper networking, health checks, init SQL
+- [x] Frontend Dockerfile with nginx for production
+- [x] nginx.conf with WebSocket proxy support
+- [x] .env.example for deployment configuration
 
 ---
 
@@ -69,6 +80,7 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 | `/api/friends/request` | POST | Send friend request |
 | `/api/friends/requests` | GET | Get pending requests |
 | `/api/friends/dm/{userId}` | GET/POST | Direct messages |
+| `/api/friends/unread` | GET | Get unread DM counts |
 
 ### Collaboration API
 | Endpoint | Method | Description |
@@ -76,20 +88,8 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 | `/api/collaboration/{id}/share` | POST | Create share link |
 | `/api/collaboration/{id}/download` | GET | Download as ZIP |
 | `/api/collaboration/{id}/export/drive` | POST | Export to Google Drive |
-
----
-
-## Database Schema (MariaDB)
-
-See `/app/database/littlehelper_ai_complete.sql` for full schema.
-
-Key tables:
-- `users` - User accounts with credits
-- `projects` - User projects
-- `project_files` - Project file contents
-- `friend_requests` - Friend request tracking
-- `friends` - Bidirectional friendships
-- `direct_messages` - DM conversations
+| `/api/collaboration/ws/{projectId}` | WS | Real-time collaboration |
+| `/api/notifications/ws` | WS | DM/friend request notifications |
 
 ---
 
@@ -99,32 +99,42 @@ Key tables:
 
 ---
 
-## Deployment Requirements
+## Deployment Guide
 
-### C# Backend
-- .NET 8.0 Runtime
-- MariaDB/MySQL database
-- HTTPS for production
-- Environment variables for connection strings
+### Quick Start with Docker
+```bash
+cd /app/backend-csharp/Docker
 
-### Frontend
-- Node.js 18+
-- `REACT_APP_BACKEND_URL` pointing to C# API
+# Copy and edit environment variables
+cp .env.example .env
+nano .env  # Edit passwords and API keys
+
+# Start all services
+docker-compose up -d
+
+# Include frontend (optional)
+docker-compose --profile with-frontend up -d
+```
+
+### Environment Variables
+- `DB_PASSWORD` - MySQL app user password
+- `DB_ROOT_PASSWORD` - MySQL root password
+- `JWT_SECRET` - JWT signing key (min 32 chars)
+- `EMERGENT_LLM_KEY` - For AI features (or other provider keys)
+
+### Database Setup
+The `littlehelper_ai_complete.sql` file is automatically loaded on first run via Docker.
 
 ---
 
 ## Pending Tasks
 
-### High Priority
-1. **Deploy C# Backend** - Set up hosting (Azure, AWS, or VPS)
-2. **Configure Database** - MariaDB with schema from SQL file
-3. **E2E Testing** - Full flow test once backend running
+### Requires C# Backend Deployment
+1. E2E Testing - Full flow test once backend running
+2. Google Drive OAuth - Complete flow testing
+3. WebSocket Testing - Collaboration and notifications
 
-### Medium Priority
-- Live cursor positions in code editor
-- Real-time DM notifications via WebSocket
-
-### Future/Backlog
-- Docker containerization
-- Mobile responsive improvements
-- Additional AI providers
+### Future Enhancements
+- Additional AI provider integrations
+- Mobile app version
+- Team workspaces
