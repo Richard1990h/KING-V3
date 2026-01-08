@@ -99,12 +99,22 @@ export default function Profile() {
     
     // Credit history
     const [creditHistory, setCreditHistory] = useState([]);
+    
+    // Google Drive integration
+    const [googleDrive, setGoogleDrive] = useState({
+        isConnected: false,
+        email: '',
+        accessToken: '',
+        refreshToken: ''
+    });
+    const [savingGoogleDrive, setSavingGoogleDrive] = useState(false);
 
     useEffect(() => {
         loadProfile();
         loadProviders();
         loadCreditHistory();
         checkPlanPermissions();
+        loadGoogleDriveConfig();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
