@@ -29,7 +29,7 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 │   └── LittleHelperAI.Agents/
 ├── frontend/                # React application
 │   └── src/
-│       ├── components/      # Reusable UI components
+│       ├── components/      # Reusable UI components (including CodeBlock)
 │       ├── pages/           # Route pages
 │       └── lib/             # Utilities and API client
 ├── database/                # SQL scripts
@@ -43,6 +43,8 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - `POST /api/ai/plan` - Generate build plan from prompt
 - `POST /api/ai/execute-task` - Execute task and generate files
 - `POST /api/assistant/chat` - Global assistant chat
+- `GET /api/conversations` - List user conversations
+- `GET /api/conversations/{id}` - Get conversation messages
 - `GET/POST/PUT/DELETE /api/admin/subscription-plans` - Plan CRUD
 - `GET/POST/PUT/DELETE /api/admin/credit-packages` - Package CRUD
 
@@ -63,6 +65,7 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - [x] Backend parses AI response to extract files with path and content
 - [x] Support for both 'request' and 'prompt' field names from frontend
 - [x] Proper JSON parsing with fallback for non-JSON responses
+- [x] File explorer integration - files saved to database and displayed
 
 #### P1 - Global Assistant
 - [x] Floating chat bubble in bottom-right corner
@@ -70,6 +73,7 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - [x] Sends messages to `/api/assistant/chat`
 - [x] Displays AI responses with proper formatting
 - [x] Shows user credits and conversation controls
+- [x] Conversations saved to database
 
 #### P2 - Admin Plans Management
 - [x] Plans tab split into two sections:
@@ -79,7 +83,19 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - [x] Full CRUD for credit packages
 - [x] API endpoints for both plan types
 
-#### Other Completed Features
+#### Additional Features Completed
+- [x] **Conversations API** (`/api/conversations`) - List and retrieve user chat history
+- [x] **Agent Pulsing Animation** - Enhanced glow effect when agents are working
+- [x] **CodeBlock Component** - Notepad++ style code display with:
+  - Syntax highlighting
+  - Line numbers
+  - Copy to clipboard
+  - Expand to fullscreen modal
+  - Download option
+- [x] **File Explorer Integration** - AI-generated files saved and displayed
+- [x] **Date Display Fix** - Project cards show correct date format
+
+#### Other Working Features
 - [x] User authentication (login, register, JWT)
 - [x] Project creation and management
 - [x] File management within projects
@@ -88,19 +104,13 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 - [x] User management with role-based access
 - [x] Credit purchase and consumption tracking
 
-### 🔄 Minor Issues / Backlog
+### 🔄 Future Enhancements (Backlog)
 
 #### Low Priority
-- [ ] `/api/conversations` endpoint for conversation history (returns 404)
-- [ ] Multi-agent pulsing animation on agent icons
-- [ ] "Notepad++" style code display for simple chat mode
-- [ ] Docker support for deployment
-
-#### Future Enhancements
-- [ ] File explorer integration with AI-generated files
 - [ ] Real-time collaboration features
 - [ ] More AI providers (Groq, Together, etc.)
 - [ ] Mobile responsive improvements
+- [ ] Docker support for deployment
 
 ---
 
@@ -116,6 +126,9 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 3. ✅ AI build plan generation
 4. ✅ AI task execution with file generation
 5. ✅ Global Assistant chat
-6. ✅ Admin subscription plan management
-7. ✅ Admin credit package management
-8. ✅ System health monitoring
+6. ✅ Conversation history storage
+7. ✅ Admin subscription plan management
+8. ✅ Admin credit package management
+9. ✅ System health monitoring
+10. ✅ Agent pulsing animations
+11. ✅ Code block display with syntax highlighting
