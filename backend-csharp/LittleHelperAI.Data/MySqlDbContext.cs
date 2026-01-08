@@ -2,9 +2,39 @@
 using MySqlConnector;
 using Dapper;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Reflection;
+using System.Text.Json;
 
 namespace LittleHelperAI.Data;
+
+// Custom type handler for JSON list columns
+public class JsonListTypeHandler : SqlMapper.TypeHandler<List<string>>
+{
+    public override List<string> Parse(object value)
+    {
+        if (value == null || value == DBNull.Value)
+            return new List<string>();
+        
+        var json = value.ToString();
+        if (string.IsNullOrEmpty(json))
+            return new List<string>();
+        
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+        }
+        catch
+        {
+            return new List<string>();
+        }
+    }
+
+    public override void SetValue(IDbDataParameter parameter, List<string>? value)
+    {
+        parameter.Value = value == null ? DBNull.Value : JsonSerializer.Serialize(value);
+    }
+}
 
 public interface IDbContext
 {
