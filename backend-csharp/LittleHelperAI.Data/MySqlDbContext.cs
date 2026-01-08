@@ -480,6 +480,17 @@ public class MySqlDbContext : IDbContext
                 INDEX idx_timestamp (timestamp)
             )");
 
+        // TOS (Terms of Service) versions table
+        await connection.ExecuteAsync(@"
+            CREATE TABLE IF NOT EXISTS tos_versions (
+                id VARCHAR(36) PRIMARY KEY,
+                version VARCHAR(20) NOT NULL UNIQUE,
+                title VARCHAR(255) NOT NULL,
+                content JSON NOT NULL,
+                effective_date DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
         // Default settings table
         await connection.ExecuteAsync(@"
             CREATE TABLE IF NOT EXISTS default_settings (
