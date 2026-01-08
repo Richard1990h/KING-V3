@@ -161,20 +161,70 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpPost("{projectId}/chat")]
-    public async Task<ActionResult<ChatMessage>> SendChatMessage(string projectId, [FromBody] SendChatRequest request)
+    public async Task<ActionResult> SendChatMessage(string projectId, [FromBody] SendChatRequest request)
     {
-        var message = new ChatMessage
+        // Save user message
+        var userMessage = new ChatMessage
         {
             UserId = GetUserId(),
             ProjectId = projectId,
-            ConversationId = request.ConversationId,
+            ConversationId = request.ConversationId ?? Guid.NewGuid().ToString(),
             Role = "user",
             Content = request.Message,
             MultiAgentMode = request.MultiAgentMode
         };
+        await _projectService.SaveChatMessageAsync(userMessage);
 
-        var savedMessage = await _projectService.SaveChatMessageAsync(message);
-        return Ok(savedMessage);
+        // Generate AI response
+        try
+        {
+            var systemPrompt = @"You are LittleHelper, an AI coding assistant. Help users with their coding questions and tasks.
+Be helpful, concise, and provide working code examples when appropriate.
+If asked to create files or code, explain what you're creating.";
+            
+            var aiResponse = await _aiService.GenerateAsync(request.Message, systemPrompt, 2000);
+            
+            // Save AI message
+            var aiMessage = new ChatMessage
+            {
+                UserId = GetUserId(),
+                ProjectId = projectId,
+                ConversationId = userMessage.ConversationId,
+                Role = "assistant",
+                Content = aiResponse.Content,
+                Provider = aiResponse.Provider,
+                Model = aiResponse.Model,
+                TokensUsed = aiResponse.Tokens
+            };
+            await _projectService.SaveChatMessageAsync(aiMessage);
+
+            // Deduct credits
+            await _creditService.DeductCreditsAsync(GetUserId(), aiResponse.Tokens / 1000.0 * 0.5, "Chat message", "chat", userMessage.ConversationId);
+
+            return Ok(new { 
+                user_message = userMessage,
+                ai_message = new {
+                    role = "assistant",
+                    content = aiResponse.Content,
+                    provider = aiResponse.Provider,
+                    model = aiResponse.Model,
+                    tokens_used = aiResponse.Tokens,
+                    timestamp = DateTime.UtcNow
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new { 
+                user_message = userMessage,
+                ai_message = new {
+                    role = "assistant",
+                    content = $"I apologize, but I encountered an error: {ex.Message}. Please try again or check your AI provider settings.",
+                    error = true,
+                    timestamp = DateTime.UtcNow
+                }
+            });
+        }
     }
 
     [HttpDelete("{projectId}/chat")]
