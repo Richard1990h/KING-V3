@@ -1,4 +1,4 @@
-// Error Handling Middleware
+// Error Handling Middleware - Fixed for record init property
 using System.Net;
 using System.Text.Json;
 
@@ -32,35 +32,36 @@ public class ErrorHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
         
-        var response = new ErrorResponse
-        {
-            Detail = exception.Message
-        };
+        string detail;
+        int statusCode;
 
         switch (exception)
         {
             case UnauthorizedAccessException:
-                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                statusCode = (int)HttpStatusCode.Unauthorized;
+                detail = exception.Message;
                 break;
             case ArgumentException:
             case InvalidOperationException:
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                statusCode = (int)HttpStatusCode.BadRequest;
+                detail = exception.Message;
                 break;
             case KeyNotFoundException:
-                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                statusCode = (int)HttpStatusCode.NotFound;
+                detail = exception.Message;
                 break;
             default:
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                response.Detail = "An internal error occurred";
+                statusCode = (int)HttpStatusCode.InternalServerError;
+                detail = "An internal error occurred";
                 break;
         }
 
+        context.Response.StatusCode = statusCode;
+        
+        var response = new ErrorResponse(detail);
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }
 }
 
-public record ErrorResponse
-{
-    public string Detail { get; init; } = "";
-}
+public record ErrorResponse(string Detail);
