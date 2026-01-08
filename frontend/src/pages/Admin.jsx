@@ -978,8 +978,8 @@ export default function Admin() {
                                                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                                             <span>Hits: {entry.hitCount || entry.hit_count || entry.usage_count || 0}</span>
                                                             <span>Provider: {entry.provider || 'unknown'}</span>
-                                                            <span className={entry.is_valid ? 'text-green-400' : 'text-red-400'}>
-                                                                {entry.is_valid ? 'Valid' : 'Invalid'}
+                                                            <span className={(entry.isValid ?? entry.is_valid) ? 'text-green-400' : 'text-red-400'}>
+                                                                {(entry.isValid ?? entry.is_valid) ? 'Valid' : 'Invalid'}
                                                             </span>
                                                         </div>
                                                     </div>
