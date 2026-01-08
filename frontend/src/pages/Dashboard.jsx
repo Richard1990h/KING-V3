@@ -66,9 +66,11 @@ export default function Dashboard() {
         }
     };
 
-    const filteredProjects = projects.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredProjects = (Array.isArray(projects) ? projects : []).filter(p => 
+        p && (
+            p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
     );
 
     const handleLogout = () => {
