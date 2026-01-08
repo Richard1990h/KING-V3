@@ -166,6 +166,30 @@ public class UserController : ControllerBase
         await _authService.SaveUserGoogleDriveConfigAsync(userId, request.IsConnected, request.Email, request.AccessToken, request.RefreshToken);
         return Ok(new { message = "Google Drive configuration saved" });
     }
+
+    // ==================== ADMIN VISIBILITY ====================
+    
+    [HttpGet("visibility")]
+    public async Task<ActionResult> GetVisibilityStatus()
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var status = await _authService.GetUserVisibilityAsync(userId);
+        return Ok(status);
+    }
+
+    [HttpPut("visibility")]
+    public async Task<ActionResult> UpdateVisibilityStatus([FromBody] VisibilityRequest request)
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        await _authService.UpdateUserVisibilityAsync(userId, request.AppearOffline);
+        return Ok(new { message = "Visibility updated", appear_offline = request.AppearOffline });
+    }
 }
 
 // Request models
