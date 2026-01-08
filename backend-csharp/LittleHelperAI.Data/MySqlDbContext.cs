@@ -1,6 +1,8 @@
-// MySQL Database Context using Dapper
+// MySQL Database Context using Dapper with snake_case mapping
 using MySqlConnector;
 using Dapper;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection;
 
 namespace LittleHelperAI.Data;
 
@@ -12,13 +14,98 @@ public interface IDbContext
     Task InitializeAsync();
 }
 
+// Custom type mapper for snake_case columns to PascalCase properties
+public class ColumnAttributeTypeMapper<T> : SqlMapper.ITypeMap
+{
+    private readonly SqlMapper.ITypeMap _defaultMapper = new DefaultTypeMap(typeof(T));
+
+    public ConstructorInfo? FindConstructor(string[] names, Type[] types)
+        => _defaultMapper.FindConstructor(names, types);
+
+    public ConstructorInfo? FindExplicitConstructor()
+        => _defaultMapper.FindExplicitConstructor();
+
+    public SqlMapper.IMemberMap? GetConstructorParameter(ConstructorInfo constructor, string columnName)
+        => _defaultMapper.GetConstructorParameter(constructor, columnName);
+
+    public SqlMapper.IMemberMap? GetMember(string columnName)
+    {
+        var properties = typeof(T).GetProperties();
+        foreach (var prop in properties)
+        {
+            var columnAttr = prop.GetCustomAttribute<ColumnAttribute>();
+            if (columnAttr != null && string.Equals(columnAttr.Name, columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return new SimpleMemberMap(columnName, prop);
+            }
+        }
+        
+        // Fallback: try to match snake_case to PascalCase
+        var pascalName = string.Concat(columnName.Split('_').Select(s => 
+            string.IsNullOrEmpty(s) ? "" : char.ToUpper(s[0]) + s.Substring(1).ToLower()));
+        var prop2 = typeof(T).GetProperty(pascalName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+        if (prop2 != null)
+        {
+            return new SimpleMemberMap(columnName, prop2);
+        }
+
+        return _defaultMapper.GetMember(columnName);
+    }
+}
+
+public class SimpleMemberMap : SqlMapper.IMemberMap
+{
+    public SimpleMemberMap(string columnName, PropertyInfo property)
+    {
+        ColumnName = columnName;
+        Property = property;
+    }
+
+    public string ColumnName { get; }
+    public Type MemberType => Property.PropertyType;
+    public PropertyInfo? Property { get; }
+    public FieldInfo? Field => null;
+    public ParameterInfo? Parameter => null;
+}
+
 public class MySqlDbContext : IDbContext
 {
     private readonly string _connectionString;
+    private static bool _typeMappersRegistered = false;
+    private static readonly object _lock = new();
 
     public MySqlDbContext(string connectionString)
     {
         _connectionString = connectionString;
+        RegisterTypeMappersOnce();
+    }
+
+    private static void RegisterTypeMappersOnce()
+    {
+        lock (_lock)
+        {
+            if (_typeMappersRegistered) return;
+            
+            // Register type mappers for all model types
+            var modelTypes = typeof(LittleHelperAI.Data.Models.User).Assembly
+                .GetTypes()
+                .Where(t => t.Namespace == "LittleHelperAI.Data.Models" && t.IsClass && !t.IsAbstract);
+
+            foreach (var type in modelTypes)
+            {
+                var mapperType = typeof(ColumnAttributeTypeMapper<>).MakeGenericType(type);
+                var mapper = Activator.CreateInstance(mapperType) as SqlMapper.ITypeMap;
+                if (mapper != null)
+                {
+                    SqlMapper.SetTypeMap(type, mapper);
+                }
+            }
+
+            // Set default mapping to handle underscore naming convention
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
+            
+            _typeMappersRegistered = true;
+        }
     }
 
     private MySqlConnection CreateConnection() => new MySqlConnection(_connectionString);
