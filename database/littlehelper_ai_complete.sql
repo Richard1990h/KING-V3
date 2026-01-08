@@ -501,3 +501,23 @@ INSERT INTO `user_themes` (`user_id`, `primary_color`, `secondary_color`, `backg
 -- Tables created: 21
 -- Data inserted: Users, Plans, Credits, AI Providers, Settings
 -- =====================================================
+
+-- =====================================================
+-- SITE SETTINGS TABLE (Admin-configurable settings)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `site_settings` (
+    `id` VARCHAR(36) PRIMARY KEY DEFAULT 'default',
+    `announcement_enabled` TINYINT(1) DEFAULT 0,
+    `announcement_message` TEXT,
+    `announcement_type` VARCHAR(20) DEFAULT 'info',
+    `maintenance_mode` TINYINT(1) DEFAULT 0,
+    `admins_auto_friend` TINYINT(1) DEFAULT 1,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `updated_by` VARCHAR(36)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default site settings
+INSERT INTO `site_settings` (`id`, `announcement_enabled`, `announcement_message`, `announcement_type`, `maintenance_mode`, `admins_auto_friend`, `updated_at`)
+VALUES ('default', 0, NULL, 'info', 0, 1, NOW())
+ON DUPLICATE KEY UPDATE `id` = `id`;
+
