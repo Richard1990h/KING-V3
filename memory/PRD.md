@@ -3,20 +3,13 @@
 ## Original Problem Statement
 Build a comprehensive AI-powered code generation platform with multi-agent capabilities, real-time collaboration, and social features.
 
-## Core Requirements
-1. **Multi-Agent Build System**: AI-powered project generation (plan → tasks → execution → file creation)
-2. **Global Assistant**: Floating chat widget for quick AI assistance
-3. **Admin Plans Management**: Subscription Plans and Credit Packages
-4. **Real-time Collaboration**: WebSocket live editing + project sharing
-5. **Multiple AI Providers**: Groq, Together AI, OpenRouter, HuggingFace, Ollama
-6. **Friends System**: Discord-style friend requests and direct messaging
-7. **Credit Sharing**: Own credits vs Shared credits per project
-
-## Tech Stack
-- **Backend**: C# ASP.NET Core 8.0, Dapper ORM, WebSocket
+## Architecture (LOCKED - DO NOT CHANGE)
+- **Backend**: C# ASP.NET Core 8.0, Dapper ORM, WebSocket, MariaDB/MySQL
 - **Frontend**: React 18, Tailwind CSS, Shadcn UI, Framer Motion
-- **Database**: MariaDB
-- **AI Integration**: Emergent LLM + 5 additional providers
+- **Database**: MariaDB (MySQL compatible)
+- **AI Integration**: Emergent LLM + 5 additional providers (Groq, OpenRouter, etc.)
+
+> **IMPORTANT**: The backend must remain C# ASP.NET Core. No rewrites to Python/FastAPI or other languages permitted.
 
 ---
 
@@ -25,42 +18,49 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 ### ✅ Completed Features
 
 #### Core Features
-- [x] Multi-Agent Build System (E2E tested)
-- [x] Global Assistant Chat
+- [x] Multi-Agent Build System (Planner → Developer → Verifier)
+- [x] Global Assistant Chat (floating widget)
 - [x] Admin Subscription Plans & Credit Packages CRUD
-- [x] CodeBlock Component (Notepad++ style)
+- [x] CodeBlock Component (Notepad++ style with syntax highlighting)
 
-#### Real-time Collaboration
+#### Real-time Collaboration (Backend Ready)
 - [x] WebSocket service (`CollaborationService.cs`)
 - [x] Share link generation with 7-day expiry
 - [x] Project download as ZIP
 - [x] `useCollaboration` React hook
 
-#### Friends System (Discord-style)
+#### Friends System (Backend Ready)
 - [x] Send/accept/deny friend requests
 - [x] Friends list management
 - [x] Direct messages (1-to-1 chat)
-- [x] System messages (friend accepted, project shared)
 - [x] Unread message count
 
-#### Credit System
-- [x] "Use Own Credits" mode (default)
-- [x] "Shared Credits" mode (owner pays)
-- [x] Credit usage logging with audit trail
-
-#### Project Collaboration
-- [x] Add friends as collaborators
-- [x] Permission levels: view, edit, admin
-- [x] Remove collaborator
-- [x] Only friends can be added
-
-#### Admin Features
-- [x] Google Drive config in admin panel
-- [x] All AI providers management
+#### Frontend Features (January 8, 2026)
+- [x] **Defensive Error Handling** - All `.map()` operations have null/undefined checks
+- [x] **CodeRunner Integration** - "Run Code" button in editor (HTML/CSS/JS, Python via Pyodide)
+- [x] **Save to Google Drive** - Button in workspace header
+- [x] **FriendsSidebar** - Integrated with defensive checks
+- [x] **Backend Unavailable Handling** - Graceful error messages when C# backend not running
 
 ---
 
-## Key API Endpoints
+## Key API Endpoints (C# Backend)
+
+### Authentication
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/register` | POST | User registration |
+| `/api/auth/login` | POST | User login (JWT) |
+| `/api/auth/me` | GET | Get current user |
+
+### Projects
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/projects` | GET | List user projects |
+| `/api/projects` | POST | Create project |
+| `/api/projects/{id}` | GET | Get project details |
+| `/api/projects/{id}/files` | GET | Get project files |
+| `/api/projects/{id}/chat` | POST | Send chat message |
 
 ### Friends API
 | Endpoint | Method | Description |
@@ -68,74 +68,30 @@ Build a comprehensive AI-powered code generation platform with multi-agent capab
 | `/api/friends` | GET | Get friends list |
 | `/api/friends/request` | POST | Send friend request |
 | `/api/friends/requests` | GET | Get pending requests |
-| `/api/friends/requests/{id}` | PUT | Accept/deny request |
-| `/api/friends/{userId}` | DELETE | Remove friend |
-| `/api/friends/dm/{userId}` | GET | Get DM messages |
-| `/api/friends/dm/{userId}` | POST | Send DM |
-| `/api/friends/dm/unread` | GET | Get unread count |
-
-### Collaborators API
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/projects/{id}/collaborators` | GET | Get collaborators |
-| `/api/projects/{id}/collaborators` | POST | Add collaborator |
-| `/api/projects/{id}/collaborators/credit-mode` | PUT | Set credit mode |
+| `/api/friends/dm/{userId}` | GET/POST | Direct messages |
 
 ### Collaboration API
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/collaboration/ws/{projectId}` | WS | WebSocket connection |
 | `/api/collaboration/{id}/share` | POST | Create share link |
 | `/api/collaboration/{id}/download` | GET | Download as ZIP |
+| `/api/collaboration/{id}/export/drive` | POST | Export to Google Drive |
 
 ---
 
-## Database Schema (New Tables)
+## Database Schema (MariaDB)
 
-```sql
--- Friend Requests
-friend_requests (id, sender_id, receiver_id, status, created_at, updated_at)
+See `/app/database/littlehelper_ai_complete.sql` for full schema.
 
--- Friends (bidirectional)
-friends (id, user_id, friend_user_id, created_at)
-
--- Direct Messages
-direct_messages (id, sender_id, receiver_id, message, message_type, is_read, created_at)
-
--- Project Collaborators
-project_collaborators (id, project_id, user_id, permission_level, invited_by, created_at)
-
--- Credit Usage Logs
-credit_usage_logs (id, project_id, user_id, credit_source, amount, action_type, description, created_at)
-
--- Project Shares
-project_shares (id, project_id, share_token, created_by, can_edit, expires_at, created_at)
-
--- Google Drive Config
-google_drive_config (id, client_id, client_secret, redirect_uri, is_configured, updated_at)
-```
+Key tables:
+- `users` - User accounts with credits
+- `projects` - User projects
+- `project_files` - Project file contents
+- `friend_requests` - Friend request tracking
+- `friends` - Bidirectional friendships
+- `direct_messages` - DM conversations
 
 ---
-
-## Credit Rules
-
-### Use Own Credits (Default)
-- Each collaborator spends their own credits
-- AI requests blocked if user has insufficient credits
-- Usage logged per user
-
-### Shared Credits
-- All AI usage draws from project owner's balance
-- Owner pays for all collaborator AI requests
-- Usage logged with `credit_source: 'shared'`
-
----
-
-## Test Results
-- **Friends API**: ✅ All endpoints working
-- **DM System**: ✅ Messages sent/received correctly
-- **Share Links**: ✅ Generated and validated
-- **AI Build E2E**: ✅ Files created successfully
 
 ## Test Credentials
 - **Test User**: test@example.com / test123
@@ -143,8 +99,32 @@ google_drive_config (id, client_id, client_secret, redirect_uri, is_configured, 
 
 ---
 
-## Future Enhancements
-- [ ] Live cursor rendering in editor
-- [ ] Google Drive OAuth for direct upload
-- [ ] Mobile responsive improvements
-- [ ] Real-time DM notifications via WebSocket
+## Deployment Requirements
+
+### C# Backend
+- .NET 8.0 Runtime
+- MariaDB/MySQL database
+- HTTPS for production
+- Environment variables for connection strings
+
+### Frontend
+- Node.js 18+
+- `REACT_APP_BACKEND_URL` pointing to C# API
+
+---
+
+## Pending Tasks
+
+### High Priority
+1. **Deploy C# Backend** - Set up hosting (Azure, AWS, or VPS)
+2. **Configure Database** - MariaDB with schema from SQL file
+3. **E2E Testing** - Full flow test once backend running
+
+### Medium Priority
+- Live cursor positions in code editor
+- Real-time DM notifications via WebSocket
+
+### Future/Backlog
+- Docker containerization
+- Mobile responsive improvements
+- Additional AI providers
