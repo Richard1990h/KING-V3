@@ -442,5 +442,26 @@ public class MySqlDbContext : IDbContext
         // Insert default settings
         await connection.ExecuteAsync(@"
             INSERT IGNORE INTO default_settings (setting_key, free_credits, language) VALUES ('new_user_defaults', 100, 'en')");
+
+        // Insert default free AI providers
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO free_ai_providers (id, name, provider, api_key, model, is_enabled, priority, created_at, updated_at) VALUES
+            ('groq', 'Groq (Free)', 'groq', '', 'llama-3.1-70b-versatile', TRUE, 1, NOW(), NOW())");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO free_ai_providers (id, name, provider, api_key, model, is_enabled, priority, created_at, updated_at) VALUES
+            ('together', 'Together AI (Free)', 'together', '', 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo', FALSE, 2, NOW(), NOW())");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO free_ai_providers (id, name, provider, api_key, model, is_enabled, priority, created_at, updated_at) VALUES
+            ('huggingface', 'HuggingFace (Free)', 'huggingface', '', 'microsoft/DialoGPT-large', FALSE, 3, NOW(), NOW())");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO free_ai_providers (id, name, provider, api_key, model, is_enabled, priority, created_at, updated_at) VALUES
+            ('openrouter', 'OpenRouter (Free)', 'openrouter', '', 'google/gemma-2-9b-it:free', FALSE, 4, NOW(), NOW())");
+        
+        await connection.ExecuteAsync(@"
+            INSERT IGNORE INTO free_ai_providers (id, name, provider, api_key, model, is_enabled, priority, created_at, updated_at) VALUES
+            ('ollama', 'Local Ollama (Free)', 'ollama', '', 'qwen2.5-coder:1.5b', FALSE, 5, NOW(), NOW())");
     }
 }
