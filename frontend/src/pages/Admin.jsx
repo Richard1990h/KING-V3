@@ -74,14 +74,16 @@ export default function Admin() {
     const [plans, setPlans] = useState([]);
     const [editingPlan, setEditingPlan] = useState(null);
     const [planForm, setPlanForm] = useState({
-        plan_id: '',
+        id: '',
         name: '',
-        price_monthly: 0,
-        daily_credits: 0,
-        max_projects: -1,
-        max_concurrent_workspaces: 1,
-        allows_own_api_keys: false,
-        features: ''
+        description: '',
+        priceMonthly: 0,
+        priceYearly: 0,
+        dailyCredits: 0,
+        maxConcurrentWorkspaces: 1,
+        allowsOwnApiKeys: false,
+        features: '',
+        sortOrder: 0
     });
     const [creatingPlan, setCreatingPlan] = useState(false);
     
