@@ -89,6 +89,12 @@ export default function Workspace() {
     const [uploading, setUploading] = useState(false);
     const fileUploadRef = useRef(null);
     
+    // Code Runner state
+    const [showCodeRunner, setShowCodeRunner] = useState(false);
+    
+    // Backend availability state
+    const [backendAvailable, setBackendAvailable] = useState(true);
+    
     const chatEndRef = useRef(null);
     const outputEndRef = useRef(null);
     
