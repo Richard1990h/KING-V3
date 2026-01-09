@@ -95,6 +95,13 @@ export default function Workspace() {
     // Backend availability state
     const [backendAvailable, setBackendAvailable] = useState(true);
     
+    // Collaboration state
+    const [showCollabDialog, setShowCollabDialog] = useState(false);
+    const [friends, setFriends] = useState([]);
+    const [collaborators, setCollaborators] = useState([]);
+    const [loadingFriends, setLoadingFriends] = useState(false);
+    const [addingCollab, setAddingCollab] = useState(false);
+    
     const chatEndRef = useRef(null);
     const outputEndRef = useRef(null);
     
