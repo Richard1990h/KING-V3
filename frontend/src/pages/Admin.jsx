@@ -58,8 +58,11 @@ const AdminsOnlinePanel = ({ users, currentUserId }) => {
     const [savingVisibility, setSavingVisibility] = useState(false);
     const [loadingVisibility, setLoadingVisibility] = useState(true);
     
-    // Filter admins from the users list
-    const admins = (users || []).filter(u => u.role === 'admin');
+    // Filter admins from the users list (handle both snake_case and camelCase)
+    const admins = (users || []).filter(u => {
+        const role = u.role || u.Role;
+        return role === 'admin' || role === 'Admin';
+    });
     
     // Load current user's visibility setting
     useEffect(() => {
