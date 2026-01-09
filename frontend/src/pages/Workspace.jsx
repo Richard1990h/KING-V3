@@ -224,6 +224,57 @@ export default function Workspace() {
         }
     };
 
+    // Load friends for collaboration
+    const loadFriendsForCollab = async () => {
+        setLoadingFriends(true);
+        try {
+            const res = await friendsAPI.getFriends();
+            setFriends(res.data?.friends || []);
+        } catch (error) {
+            console.error('Failed to load friends:', error);
+            setFriends([]);
+        } finally {
+            setLoadingFriends(false);
+        }
+    };
+
+    // Load project collaborators
+    const loadCollaborators = async () => {
+        try {
+            const res = await collaboratorsAPI.getAll(projectId);
+            setCollaborators(res.data?.collaborators || []);
+        } catch (error) {
+            console.error('Failed to load collaborators:', error);
+            setCollaborators([]);
+        }
+    };
+
+    // Add collaborator to project
+    const addCollaborator = async (friendUserId) => {
+        setAddingCollab(true);
+        try {
+            await collaboratorsAPI.add(projectId, friendUserId, 'edit');
+            loadCollaborators();
+            alert('Collaborator added successfully!');
+        } catch (error) {
+            const msg = error.response?.data?.detail || 'Failed to add collaborator';
+            alert(msg);
+        } finally {
+            setAddingCollab(false);
+        }
+    };
+
+    // Remove collaborator from project
+    const removeCollaborator = async (collaboratorUserId) => {
+        if (!confirm('Are you sure you want to remove this collaborator?')) return;
+        try {
+            await collaboratorsAPI.remove(projectId, collaboratorUserId);
+            loadCollaborators();
+        } catch (error) {
+            console.error('Failed to remove collaborator:', error);
+        }
+    };
+
     const loadConversationIntoChat = async (conversationId) => {
         try {
             const res = await api.get(`/conversations/${conversationId}/messages`);
