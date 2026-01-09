@@ -572,7 +572,7 @@ CREATE TABLE IF NOT EXISTS `project_collaborators` (
     `id` VARCHAR(36) PRIMARY KEY,
     `project_id` VARCHAR(36) NOT NULL,
     `user_id` VARCHAR(36) NOT NULL,
-    `permission` VARCHAR(20) DEFAULT 'view',
+    `permission_level` VARCHAR(20) DEFAULT 'edit',
     `invited_by` VARCHAR(36),
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
