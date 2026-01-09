@@ -1665,7 +1665,15 @@ export default function Admin() {
                                     onClick={async () => {
                                         setSavingSiteSettings(true);
                                         try {
-                                            await siteSettingsAPI.update(siteSettings);
+                                            // Transform snake_case to PascalCase for C# backend
+                                            const requestData = {
+                                                AnnouncementEnabled: siteSettings.announcement_enabled,
+                                                AnnouncementMessage: siteSettings.announcement_message,
+                                                AnnouncementType: siteSettings.announcement_type,
+                                                MaintenanceMode: siteSettings.maintenance_mode,
+                                                AdminsAutoFriend: siteSettings.admins_auto_friend
+                                            };
+                                            await siteSettingsAPI.update(requestData);
                                             alert('Site settings saved successfully!');
                                         } catch (error) {
                                             console.error('Failed to save site settings:', error);
