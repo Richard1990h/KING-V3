@@ -284,7 +284,7 @@ export const profileAPI = {
     saveGoogleDriveConfig: (config) => api.put('/user/google-drive', config),
     // Visibility (admin appear offline feature)
     getVisibility: () => api.get('/user/visibility'),
-    updateVisibility: (appearOffline) => api.put('/user/visibility', { appear_offline: appearOffline })
+    updateVisibility: (appearOffline) => api.put('/user/visibility', { AppearOffline: appearOffline })
 };
 
 // Credit Packages API (add-ons)
