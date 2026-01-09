@@ -347,12 +347,16 @@ export default function Admin() {
                 chat: settingsRes.data?.credits_per_1k_tokens_chat || 0.5,
                 project: settingsRes.data?.credits_per_1k_tokens_project || 1.0
             });
-            // Load site settings
+            // Load site settings (transform PascalCase from C# to snake_case)
             if (siteSettingsRes.data) {
-                setSiteSettings(prev => ({
-                    ...prev,
-                    ...siteSettingsRes.data
-                }));
+                const data = siteSettingsRes.data;
+                setSiteSettings({
+                    announcement_enabled: data.AnnouncementEnabled ?? data.announcement_enabled ?? false,
+                    announcement_message: data.AnnouncementMessage ?? data.announcement_message ?? '',
+                    announcement_type: data.AnnouncementType ?? data.announcement_type ?? 'info',
+                    maintenance_mode: data.MaintenanceMode ?? data.maintenance_mode ?? false,
+                    admins_auto_friend: data.AdminsAutoFriend ?? data.admins_auto_friend ?? true
+                });
             }
         } catch (error) {
             console.error('Failed to load admin data:', error);
