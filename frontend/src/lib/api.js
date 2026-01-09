@@ -78,6 +78,19 @@ export const filesAPI = {
     delete: (projectId, fileId) => api.delete(`/projects/${projectId}/files/${fileId}`)
 };
 
+// Project Collaborators API
+export const collaboratorsAPI = {
+    getAll: (projectId) => api.get(`/projects/${projectId}/collaborators`),
+    add: (projectId, userId, permission = 'edit') => 
+        api.post(`/projects/${projectId}/collaborators`, { UserId: userId, Permission: permission }),
+    update: (projectId, collaboratorUserId, permission) => 
+        api.put(`/projects/${projectId}/collaborators/${collaboratorUserId}`, { Permission: permission }),
+    remove: (projectId, collaboratorUserId) => 
+        api.delete(`/projects/${projectId}/collaborators/${collaboratorUserId}`),
+    setCreditMode: (projectId, mode) => 
+        api.put(`/projects/${projectId}/collaborators/credit-mode`, { Mode: mode })
+};
+
 // Chat API
 export const chatAPI = {
     getHistory: (projectId) => api.get(`/projects/${projectId}/chat`),
