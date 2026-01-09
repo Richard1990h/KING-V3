@@ -54,11 +54,28 @@ const HealthBadge = ({ status }) => {
 
 // Admins Online Panel Component
 const AdminsOnlinePanel = ({ users, currentUserId }) => {
-    const [adminVisibility, setAdminVisibility] = useState({});
+    const [appearOffline, setAppearOffline] = useState(false);
     const [savingVisibility, setSavingVisibility] = useState(false);
+    const [loadingVisibility, setLoadingVisibility] = useState(true);
     
     // Filter admins from the users list
     const admins = (users || []).filter(u => u.role === 'admin');
+    
+    // Load current user's visibility setting
+    useEffect(() => {
+        loadVisibility();
+    }, []);
+    
+    const loadVisibility = async () => {
+        try {
+            const res = await profileAPI.getVisibility();
+            setAppearOffline(res.data?.appear_offline ?? false);
+        } catch (error) {
+            console.error('Failed to load visibility:', error);
+        } finally {
+            setLoadingVisibility(false);
+        }
+    };
     
     // Calculate online status based on last_login_at (within last 15 minutes)
     const isOnline = (lastLogin) => {
@@ -73,14 +90,12 @@ const AdminsOnlinePanel = ({ users, currentUserId }) => {
     const toggleMyVisibility = async () => {
         setSavingVisibility(true);
         try {
-            const newVisibility = !adminVisibility[currentUserId];
-            // In a real implementation, this would call the backend
-            // await adminAPI.updateAdminVisibility(currentUserId, !newVisibility);
-            setAdminVisibility(prev => ({ ...prev, [currentUserId]: newVisibility }));
-            // For now, just update local state
-            alert(newVisibility ? 'You are now appearing as Online' : 'You are now appearing as Offline');
+            const newValue = !appearOffline;
+            await profileAPI.updateVisibility(newValue);
+            setAppearOffline(newValue);
         } catch (error) {
             console.error('Failed to update visibility:', error);
+            alert('Failed to update visibility. Please try again.');
         } finally {
             setSavingVisibility(false);
         }
@@ -89,8 +104,12 @@ const AdminsOnlinePanel = ({ users, currentUserId }) => {
     // Get display status (respects visibility setting)
     const getDisplayStatus = (admin) => {
         const actuallyOnline = isOnline(admin.last_login_at || admin.analytics?.last_login_at);
-        // If admin has set visibility to hidden, show offline even if online
-        if (adminVisibility[admin.id] === false) {
+        // If this is the current user and they've set appear_offline
+        if (admin.id === currentUserId && appearOffline) {
+            return { status: 'offline', label: 'Appear Offline', color: 'bg-gray-500' };
+        }
+        // For other admins, check their appear_offline setting (if available)
+        if (admin.appear_offline) {
             return { status: 'offline', label: 'Appear Offline', color: 'bg-gray-500' };
         }
         if (actuallyOnline) {
@@ -115,7 +134,7 @@ const AdminsOnlinePanel = ({ users, currentUserId }) => {
                     <div>
                         <Label className="text-white">Your Visibility</Label>
                         <p className="text-sm text-gray-400 mt-1">
-                            {adminVisibility[currentUserId] === false 
+                            {appearOffline 
                                 ? "You're appearing as offline to other users"
                                 : "You're visible as online when active"
                             }
@@ -123,12 +142,12 @@ const AdminsOnlinePanel = ({ users, currentUserId }) => {
                     </div>
                     <div className="flex items-center gap-3">
                         <span className="text-sm text-gray-400">
-                            {adminVisibility[currentUserId] === false ? 'Hidden' : 'Visible'}
+                            {appearOffline ? 'Hidden' : 'Visible'}
                         </span>
                         <Switch
-                            checked={adminVisibility[currentUserId] !== false}
+                            checked={!appearOffline}
                             onCheckedChange={toggleMyVisibility}
-                            disabled={savingVisibility}
+                            disabled={savingVisibility || loadingVisibility}
                         />
                     </div>
                 </div>
