@@ -76,7 +76,19 @@ public class AuthService : IAuthService
             var settings = await _db.QueryFirstOrDefaultAsync<dynamic>(
                 "SELECT admins_auto_friend FROM site_settings WHERE id = 'default'");
             
-            if (settings == null || settings.admins_auto_friend != true)
+            // Handle boolean check properly (MySQL returns 1/0, not true/false)
+            if (settings == null)
+                return;
+            
+            bool autoFriendEnabled = false;
+            if (settings.admins_auto_friend is bool b)
+                autoFriendEnabled = b;
+            else if (settings.admins_auto_friend is int i)
+                autoFriendEnabled = i == 1;
+            else if (settings.admins_auto_friend is long l)
+                autoFriendEnabled = l == 1;
+            
+            if (!autoFriendEnabled)
                 return;
 
             // Get all admin IDs
@@ -85,6 +97,9 @@ public class AuthService : IAuthService
 
             foreach (var adminId in adminIds)
             {
+                // Skip if admin is the new user (edge case)
+                if (adminId == newUserId) continue;
+                
                 // Create bidirectional friendship
                 var friendshipId1 = Guid.NewGuid().ToString();
                 var friendshipId2 = Guid.NewGuid().ToString();
