@@ -830,6 +830,120 @@ export default function Workspace() {
                         <span className="ml-2 hidden xl:inline">Save to Drive</span>
                     </Button>
                     
+                    {/* Invite Friend / Collaborators Button */}
+                    <Dialog open={showCollabDialog} onOpenChange={(open) => {
+                        setShowCollabDialog(open);
+                        if (open) {
+                            loadFriendsForCollab();
+                            loadCollaborators();
+                        }
+                    }}>
+                        <DialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-2 sm:px-3 hidden md:flex"
+                                data-testid="invite-collaborator-btn"
+                            >
+                                <UserPlus size={16} />
+                                <span className="ml-2 hidden lg:inline">Invite</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-[#0B0F19] border-white/10 max-w-md">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <Users size={18} className="text-cyan-400" />
+                                    Project Collaborators
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                {/* Current Collaborators */}
+                                <div>
+                                    <h4 className="text-sm font-medium mb-2 text-gray-300">Current Collaborators</h4>
+                                    {collaborators.length === 0 ? (
+                                        <p className="text-sm text-gray-500">No collaborators yet. Invite friends below.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {collaborators.map(collab => (
+                                                <div key={collab.id || collab.user_id} className="flex items-center justify-between p-2 rounded bg-white/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-7 h-7 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                                                            <span className="text-xs text-cyan-400">{collab.display_name?.[0]?.toUpperCase() || collab.email?.[0]?.toUpperCase()}</span>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm">{collab.display_name || collab.email}</p>
+                                                            <p className="text-xs text-gray-500">{collab.permission_level || 'edit'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                                        onClick={() => removeCollaborator(collab.user_id)}
+                                                    >
+                                                        <X size={14} />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Add from Friends */}
+                                <div>
+                                    <h4 className="text-sm font-medium mb-2 text-gray-300">Invite Friends</h4>
+                                    {loadingFriends ? (
+                                        <div className="flex items-center justify-center py-4">
+                                            <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+                                        </div>
+                                    ) : friends.length === 0 ? (
+                                        <div className="text-center py-4 text-gray-500">
+                                            <Users size={24} className="mx-auto mb-2 opacity-50" />
+                                            <p className="text-sm">No friends yet</p>
+                                            <p className="text-xs mt-1">Add friends via the chat button to invite them</p>
+                                        </div>
+                                    ) : (
+                                        <ScrollArea className="max-h-[200px]">
+                                            <div className="space-y-2">
+                                                {friends
+                                                    .filter(f => !collaborators.some(c => c.user_id === f.friend_user_id))
+                                                    .map(friend => (
+                                                        <div key={friend.id} className="flex items-center justify-between p-2 rounded bg-white/5 hover:bg-white/10 transition-colors">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-7 h-7 rounded-full bg-fuchsia-500/20 flex items-center justify-center">
+                                                                    <span className="text-xs text-fuchsia-400">{friend.display_name?.[0]?.toUpperCase() || '?'}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm">{friend.display_name}</p>
+                                                                    <p className="text-xs text-gray-500">{friend.email}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Button
+                                                                size="sm"
+                                                                disabled={addingCollab}
+                                                                onClick={() => addCollaborator(friend.friend_user_id)}
+                                                                className="bg-cyan-500 hover:bg-cyan-600 text-xs h-7"
+                                                            >
+                                                                {addingCollab ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                                                <span className="ml-1">Add</span>
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                {friends.filter(f => !collaborators.some(c => c.user_id === f.friend_user_id)).length === 0 && (
+                                                    <p className="text-sm text-gray-500 text-center py-2">All friends are already collaborators</p>
+                                                )}
+                                            </div>
+                                        </ScrollArea>
+                                    )}
+                                </div>
+                                
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Collaborators can view and edit this project. They&apos;ll be notified via direct message.
+                                </p>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                    
                     <div className="ml-2 sm:ml-4 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30">
                         <Zap size={16} className="text-fuchsia-400" />
                         <span className="text-fuchsia-300 font-medium text-sm">{formatCredits(user?.credits || 0)}</span>
