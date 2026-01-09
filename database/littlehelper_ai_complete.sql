@@ -523,6 +523,66 @@ ON DUPLICATE KEY UPDATE `id` = `id`;
 
 
 -- =====================================================
+-- FRIEND REQUESTS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `friend_requests` (
+    `id` VARCHAR(36) PRIMARY KEY,
+    `sender_id` VARCHAR(36) NOT NULL,
+    `receiver_id` VARCHAR(36) NOT NULL,
+    `status` VARCHAR(20) DEFAULT 'pending',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`receiver_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_friend_request` (`sender_id`, `receiver_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- FRIENDS TABLE (Accepted friendships)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `friends` (
+    `id` VARCHAR(36) PRIMARY KEY,
+    `user_id` VARCHAR(36) NOT NULL,
+    `friend_user_id` VARCHAR(36) NOT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`friend_user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_friendship` (`user_id`, `friend_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- DIRECT MESSAGES TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `direct_messages` (
+    `id` VARCHAR(36) PRIMARY KEY,
+    `sender_id` VARCHAR(36) NOT NULL,
+    `receiver_id` VARCHAR(36) NOT NULL,
+    `message` TEXT NOT NULL,
+    `message_type` VARCHAR(20) DEFAULT 'text',
+    `is_read` TINYINT(1) DEFAULT 0,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`receiver_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- PROJECT COLLABORATORS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `project_collaborators` (
+    `id` VARCHAR(36) PRIMARY KEY,
+    `project_id` VARCHAR(36) NOT NULL,
+    `user_id` VARCHAR(36) NOT NULL,
+    `permission` VARCHAR(20) DEFAULT 'view',
+    `invited_by` VARCHAR(36),
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`invited_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    UNIQUE KEY `unique_project_collaborator` (`project_id`, `user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================
 -- PERFORMANCE INDEXES
 -- =====================================================
 
