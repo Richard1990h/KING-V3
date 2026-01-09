@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
 import { useTheme } from '../lib/theme';
-import { projectsAPI, filesAPI, chatAPI, agentsAPI } from '../lib/api';
+import { projectsAPI, filesAPI, chatAPI, agentsAPI, friendsAPI, collaboratorsAPI } from '../lib/api';
 import api from '../lib/api';
 import { formatCredits, getSyntaxLanguage, AGENT_COLORS, debounce } from '../lib/utils';
 import { Button } from '../components/ui/button';
@@ -29,7 +29,7 @@ import {
     MessageSquare, Terminal, Cpu, LayoutGrid, Search, Code, TestTube,
     Bug, CheckCircle, Mic, RefreshCw, X, Maximize2, Minimize2, History,
     FolderOpen, ListTodo, Edit3, Check, AlertCircle, Loader2, Upload,
-    PlayCircle, Cloud, Users
+    PlayCircle, Cloud, Users, UserPlus
 } from 'lucide-react';
 
 const AGENT_ICONS = {
