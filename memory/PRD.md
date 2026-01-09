@@ -1,109 +1,82 @@
 # LittleHelper AI - Product Requirements Document
 
-## Architecture (LOCKED)
-- **Backend**: C# ASP.NET Core 8.0, MariaDB/MySQL
-- **Frontend**: React 18, Tailwind CSS, Shadcn UI
+## Original Problem Statement
+Build a full-stack application with a C#/.NET backend and React frontend featuring:
+- AI Code Execution Environment (sandboxed)
+- Google Drive Integration
+- Advanced Collaboration Features (Friends, DMs, Project Sharing)
+- Admin Features (Announcements, Auto-friending)
+- Gamification (Wave Defense game on login)
+- Real-time Notifications via WebSockets
+- Redis Caching
 
----
+## Architecture Constraint
+**CRITICAL**: The C#/.NET backend CANNOT run in the Emergent development environment (Python/FastAPI only). All backend code must be deployed externally using Docker.
 
-## Code Review Fixes Applied (January 8, 2026)
+## Tech Stack
+- **Frontend**: React, Tailwind CSS, Shadcn UI, Framer Motion
+- **Backend**: C# ASP.NET Core, Dapper, JWT, SignalR
+- **Database**: MariaDB/MySQL
+- **Caching**: Redis
+- **Deployment**: Docker, Docker Compose
 
-### 🔴 Critical Issues Fixed:
+## Current Status
 
-1. **FriendsController - display_name handling** ✅
-   - Added `COALESCE(u.display_name, u.name, u.email)` fallback
-   - Prevents null reference errors
+### ✅ Completed
+- Frontend UI fully functional with defensive error handling
+- Wave Defense game fallback when backend is down
+- Admin Panel with Site Settings tab
+- Admin Team Status panel (online/offline with visibility toggle)
+- Friends sidebar with improved error handling
+- All C# backend controllers and services implemented
+- Database schema complete with all tables
+- Docker deployment configuration ready
 
-2. **CollaborationController - HttpClient disposal** ✅
-   - Changed from `new HttpClient()` to `IHttpClientFactory`
-   - Registered in Program.cs with `AddHttpClient()`
+### 🔴 Blocked (Requires External Deployment)
+- Site Settings saving (announcement, maintenance mode)
+- Friends system (send requests, accept/deny)
+- Direct messaging between friends
+- Real-time notifications
+- Admin auto-friend feature
+- Maintenance mode login blocking
 
-3. **ClearChatHistory endpoint** ✅
-   - Now actually deletes messages from database
-   - Added `ClearChatHistoryAsync` to IProjectService and ProjectService
-   - Returns count of deleted messages
+### 🟡 In Progress
+- User needs to deploy C# backend externally
 
-4. **Rate limiting on friend requests** ✅
-   - Max 10 requests per hour per user
-   - Returns 429 Too Many Requests when exceeded
+### 📋 Upcoming Tasks (P1)
+1. Google Drive OAuth integration (backend logic)
+2. Secure sandboxed code execution environment
+3. End-to-end testing after backend deployment
 
-### 🟡 Medium Issues Fixed:
+### 📦 Future/Backlog (P2)
+- Live collaboration (cursor tracking)
+- Credit-sharing rules for collaborative projects
+- Collaborator avatars in workspace
 
-5. **Pagination on friends list** ✅
-   - Added `page` and `limit` query parameters
-   - Returns pagination metadata (total, pages)
-   - Max 50 friends per page
+## Key Files
+- `/app/backend-csharp/Docker/docker-compose.yml` - Deployment configuration
+- `/app/database/littlehelper_ai_complete.sql` - Full database schema
+- `/app/frontend/src/pages/Admin.jsx` - Admin Panel with Site Settings
+- `/app/frontend/src/components/FriendsSidebar.jsx` - Friends functionality
+- `/app/backend-csharp/LittleHelperAI.API/Services/` - All backend services
 
-6. **DM query order** ✅
-   - Fixed with subquery: gets latest DESC, then orders ASC
-   - Added `before` parameter for cursor pagination
+## API Endpoints
+- `GET/PUT /api/site-settings` - Admin site settings
+- `GET /api/site-settings/public` - Public announcement
+- `GET/PUT /api/user/visibility` - Admin appear offline toggle
+- `POST /api/friends/request` - Send friend request
+- `GET /api/friends/dm/{userId}` - Get direct messages
+- `WS /api/notifications` - Real-time WebSocket notifications
 
-7. **Message length validation** ✅
-   - Max 5000 characters per message
-   - Trims whitespace
-   - Returns 400 Bad Request if too long
-
-8. **Secure share token generation** ✅
-   - Changed from `Random.Shared` to `RandomNumberGenerator`
-   - Uses 256 bits of cryptographic randomness
-
-### 🟢 Performance Improvements:
-
-9. **Database indexes added** ✅
-   - `friend_requests`: sender_id, receiver_id, status, created_at
-   - `friends`: user_id, friend_user_id
-   - `direct_messages`: sender_id, receiver_id, is_read, created_at
-   - `chat_history`: project_id, user_id, conversation_id, timestamp
-   - `project_collaborators`: project_id, user_id
-
----
-
-## Files Modified:
-
-| File | Changes |
-|------|---------|
-| `FriendsController.cs` | Rate limiting, pagination, message validation, query fixes |
-| `CollaborationController.cs` | IHttpClientFactory, secure token generation |
-| `ProjectsController.cs` | ClearChatHistory implementation |
-| `IProjectService.cs` | Added ClearChatHistoryAsync |
-| `ProjectService.cs` | Implemented ClearChatHistoryAsync |
-| `Program.cs` | Added HttpClient factory registration |
-| `littlehelper_ai_complete.sql` | Added performance indexes |
-
----
-
-## API Changes:
-
-### Friends API
-```
-GET /api/friends?page=1&limit=50  # Pagination added
-POST /api/friends/request         # Rate limited (10/hour)
-GET /api/friends/dm/{userId}?limit=50&before={timestamp}  # Cursor pagination
-POST /api/friends/dm/{userId}     # Max 5000 chars
-```
-
-### Projects API
-```
-DELETE /api/projects/{id}/chat    # Now actually clears history
-```
-
----
+## Deployment Instructions
+1. Navigate to `/app/backend-csharp/Docker/`
+2. Run `docker-compose up -d`
+3. Update frontend `REACT_APP_BACKEND_URL` to deployed backend URL
+4. Import `/app/database/littlehelper_ai_complete.sql` into MariaDB
 
 ## Test Credentials
-- **User**: test@example.com / test123
-- **Admin**: admin@littlehelper.ai / admin123
+- Admin: `admin@littlehelper.ai` / `admin123`
+- Test User: `test@example.com` / `test123`
 
 ---
-
-## Deployment Steps
-
-1. **Update database with new indexes:**
-   ```sql
-   -- Run the index creation statements from littlehelper_ai_complete.sql
-   ```
-
-2. **Build and deploy:**
-   ```bash
-   cd /app/backend-csharp/Docker
-   docker-compose up -d --build
-   ```
+Last Updated: January 9, 2025
